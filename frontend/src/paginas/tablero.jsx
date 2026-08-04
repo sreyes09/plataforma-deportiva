@@ -52,24 +52,6 @@ const crearModulosEntrenador = (t) => [
   { id: 'seguimiento', titulo: t('Seguimiento', 'Tracking'), descripcion: t('Registra observaciones individuales.', 'Record individual observations.') },
 ]
 
-const modulosDeportista = [
-  { id: 'perfil', titulo: 'Perfil deportivo', descripcion: 'Actualiza tus datos personales y disciplina.' },
-  { id: 'estadisticas', titulo: 'Estadísticas', descripcion: 'Registra tu rendimiento individual.' },
-  { id: 'sesiones', titulo: 'Sesiones asignadas', descripcion: 'Consulta entrenamientos indicados por tus entrenadores.' },
-  { id: 'metas', titulo: 'Metas asignadas', descripcion: 'Revisa objetivos activos y su progreso.' },
-  { id: 'competencias', titulo: 'Competencias asignadas', descripcion: 'Mira los eventos que te corresponden.' },
-  { id: 'logros', titulo: 'Logros', descripcion: 'Reconocimientos y metas completadas.' },
-]
-
-const modulosEntrenador = [
-  { id: 'perfil', titulo: 'Perfil del entrenador', descripcion: 'Gestiona tu enfoque y categoría.' },
-  { id: 'deportistas', titulo: 'Deportistas vinculados', descripcion: 'Agrega cuentas reales de deportistas por correo.' },
-  { id: 'sesiones', titulo: 'Sesiones', descripcion: 'Asigna entrenamientos a uno o varios deportistas.' },
-  { id: 'metas', titulo: 'Metas', descripcion: 'Crea objetivos específicos para tus deportistas.' },
-  { id: 'competencias', titulo: 'Competencias', descripcion: 'Asigna eventos o torneos a tu grupo.' },
-  { id: 'seguimiento', titulo: 'Seguimiento', descripcion: 'Registra observaciones individuales.' },
-]
-
 // Pantalla principal del sistema. Cambia dinamicamente segun el rol autenticado.
 function Tablero() {
   const { usuario, cerrarSesion } = useAuth()
@@ -140,7 +122,7 @@ function Tablero() {
       setDatos(normalizarPanel(usuario, respuesta))
       return { ok: true }
     } catch (error) {
-      const mensaje = error.response?.data?.mensaje || 'No se pudo vincular el deportista.'
+      const mensaje = error.response?.data?.mensaje || t('No se pudo vincular el deportista.', 'The athlete could not be linked.')
       setErrorApi(mensaje)
       return { ok: false, mensaje }
     } finally {
@@ -159,16 +141,16 @@ function Tablero() {
         seriePrincipal: construirResumenCoach(datos),
         serieSecundaria: distribucion.series,
         graficoPrincipal: {
-          etiqueta: 'Vista del grupo',
-          titulo: 'Avance de metas por deportista vinculado',
+          etiqueta: t('Vista del grupo', 'Group view'),
+          titulo: t('Avance de metas por deportista vinculado', 'Goal progress by linked athlete'),
           valorKey: 'valor',
           detalleKey: 'detalle',
-          nombreValor: 'Progreso',
+          nombreValor: t('Progreso', 'Progress'),
           sufijoValor: '%',
           limitePorcentaje: true,
         },
         graficoSecundario: {
-          etiqueta: 'Estado general',
+          etiqueta: t('Estado general', 'Overall status'),
           titulo: `${distribucion.porcentaje}% de deportistas al día con sus metas`,
           porcentajeCentro: distribucion.porcentaje,
           total: distribucion.total,
@@ -259,7 +241,7 @@ function Tablero() {
                 ? 'border-rose-400/30 bg-rose-400/10 text-rose-100'
                 : 'border-cyan-400/30 bg-cyan-400/10 text-cyan-100'
             }`}>
-              {errorApi || 'Guardando cambios en la base de datos...'}
+              {errorApi || t('Guardando cambios en la base de datos...', 'Saving changes to the database...')}
             </div>
           </section>
         )}
@@ -267,17 +249,17 @@ function Tablero() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {esEntrenador ? (
             <>
-              <ResumenCard titulo="Deportistas" valor={contenido.resumen.deportistas} detalle="cuentas vinculadas" />
-              <ResumenCard titulo="Sesiones" valor={contenido.resumen.sesiones} detalle={`${contenido.resumen.sesionesPendientes} pendientes`} />
-              <ResumenCard titulo="Alertas" valor={contenido.resumen.alertas} detalle="observaciones prioritarias" />
-              <ResumenCard titulo="Competencias" valor={contenido.resumen.competencias} detalle={`${contenido.resumen.promedioProgreso}% progreso promedio`} />
+              <ResumenCard titulo={t('Deportistas', 'Athletes')} valor={contenido.resumen.deportistas} detalle={t('cuentas vinculadas', 'linked accounts')} />
+              <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t(`${contenido.resumen.sesionesPendientes} pendientes`, `${contenido.resumen.sesionesPendientes} pending`)} />
+              <ResumenCard titulo={t('Alertas', 'Alerts')} valor={contenido.resumen.alertas} detalle={t('observaciones prioritarias', 'priority observations')} />
+              <ResumenCard titulo={t('Competencias', 'Competitions')} valor={contenido.resumen.competencias} detalle={t(`${contenido.resumen.promedioProgreso}% progreso promedio`, `${contenido.resumen.promedioProgreso}% average progress`)} />
             </>
           ) : (
             <>
-              <ResumenCard titulo="Estadisticas" valor={contenido.resumen.estadisticas} detalle="registros personales" />
-              <ResumenCard titulo="Sesiones" valor={contenido.resumen.sesiones} detalle="asignadas por entrenadores" />
-              <ResumenCard titulo="Metas" valor={contenido.resumen.metas} detalle={`${contenido.resumen.metasCompletadas} completadas`} />
-              <ResumenCard titulo="Competencias" valor={contenido.resumen.competencias} detalle="eventos asignados" />
+              <ResumenCard titulo={t('Estadisticas', 'Statistics')} valor={contenido.resumen.estadisticas} detalle={t('registros personales', 'personal records')} />
+              <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t('asignadas por entrenadores', 'assigned by coaches')} />
+              <ResumenCard titulo={t('Metas', 'Goals')} valor={contenido.resumen.metas} detalle={t(`${contenido.resumen.metasCompletadas} completadas`, `${contenido.resumen.metasCompletadas} completed`)} />
+              <ResumenCard titulo={t('Competencias', 'Competitions')} valor={contenido.resumen.competencias} detalle={t('eventos asignados', 'assigned events')} />
             </>
           )}
         </section>
@@ -291,7 +273,7 @@ function Tablero() {
 
             <div className="h-64">
               {contenido.seriePrincipal.length === 0 ? (
-                <EstadoVacio mensaje="Todavía no hay datos suficientes para graficar esta vista." />
+                <EstadoVacio mensaje={t('Todavia no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={contenido.seriePrincipal}>
@@ -350,9 +332,9 @@ function Tablero() {
               )}
             </div>
             <div className="mt-4 flex items-center justify-between gap-4 text-sm text-slate-300">
-              <p>{contenido.graficoSecundario.total} elementos evaluados</p>
+              <p>{contenido.graficoSecundario.total} {t('elementos evaluados', 'items evaluated')}</p>
               <div className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 font-semibold text-cyan-100">
-                {contenido.graficoSecundario.porcentajeCentro}% completado
+                {contenido.graficoSecundario.porcentajeCentro}% {t('completado', 'completed')}
               </div>
             </div>
           </Panel>
@@ -425,6 +407,7 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
     competencia: '',
   })
   const [metasLocales, setMetasLocales] = useState(datos.metas)
+  const { esOscuro, t } = useUI()
 
   const perfilRef = useRef(JSON.stringify(datos.perfil))
   const metasRef = useRef(JSON.stringify(datos.metas))
@@ -513,33 +496,33 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
     return (
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-6">
-          <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Perfil activo</p>
+          <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Perfil activo', 'Active profile')}</p>
           <h3 className="mt-2 text-2xl font-semibold">Información deportiva</h3>
           <p className="mt-3 max-w-xl text-sm text-slate-300">
-            Este perfil lo ve usted en su cuenta y ayuda a que los entrenadores lo identifiquen mejor cuando lo vinculan.
+            {t('Este perfil lo ve usted en su cuenta y ayuda a que los entrenadores lo identifiquen mejor cuando lo vinculan.', 'This profile is visible in your account and helps coaches identify you better when they link you.')}
           </p>
           <div className="grid gap-3 md:grid-cols-2">
             <ResumenAsignadoSimple
-              titulo="Metas asignadas"
-              vacio="Aun no tienes metas asignadas."
+              titulo={t('Metas asignadas', 'Assigned goals')}
+              vacio={t('Aun no tienes metas asignadas.', 'You do not have any assigned goals yet.')}
               items={datos.metas}
               render={(meta) => `${meta.titulo} - ${meta.progreso}/${meta.objetivo}`}
             />
             <ResumenAsignadoSimple
-              titulo="Sesiones asignadas"
-              vacio="Aun no tienes sesiones asignadas."
+              titulo={t('Sesiones asignadas', 'Assigned sessions')}
+              vacio={t('Aun no tienes sesiones asignadas.', 'You do not have any assigned sessions yet.')}
               items={datos.sesiones}
               render={(sesion) => `${sesion.tipo} - ${sesion.fecha}`}
             />
             <ResumenAsignadoSimple
-              titulo="Competencias asignadas"
-              vacio="Aun no tienes competencias asignadas."
+              titulo={t('Competencias asignadas', 'Assigned competitions')}
+              vacio={t('Aun no tienes competencias asignadas.', 'You do not have any assigned competitions yet.')}
               items={datos.competencias}
               render={(competencia) => `${competencia.nombre} - ${competencia.fecha}`}
             />
             <ResumenAsignadoSimple
-              titulo="Seguimiento"
-              vacio="Aun no hay observaciones de tu entrenador."
+              titulo={t('Seguimiento', 'Tracking')}
+              vacio={t('Aun no hay observaciones de tu entrenador.', 'There are no coach observations yet.')}
               items={datos.observaciones}
               render={(observacion) => `${observacion.prioridad} - ${observacion.nota}`}
             />
@@ -548,11 +531,11 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
 
         {editandoPerfil || !perfilTieneContenido ? (
           <form onSubmit={guardarPerfil} className="grid gap-4 md:grid-cols-2">
-            <Campo label="Disciplina" value={perfil.disciplina} onChange={(value) => setPerfil({ ...perfil, disciplina: value })} />
+            <Campo label={t('Disciplina', 'Discipline')} value={perfil.disciplina} onChange={(value) => setPerfil({ ...perfil, disciplina: value })} />
             <Campo label="Categoria" value={perfil.categoria} onChange={(value) => setPerfil({ ...perfil, categoria: value })} />
             <Campo label="Equipo" value={perfil.equipo} onChange={(value) => setPerfil({ ...perfil, equipo: value })} />
             <div className="md:col-span-2">
-              <Etiqueta>Foto de perfil</Etiqueta>
+              <Etiqueta>{t('Foto de perfil', 'Profile picture')}</Etiqueta>
               <input
                 type="file"
                 accept="image/*"
@@ -560,14 +543,14 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
                 className="mt-2 block w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-200"
               />
               <p className="mt-2 text-xs text-slate-400">
-                Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.
+                {t('Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.', 'You can upload JPG, JPEG, PNG, WEBP, GIF, SVG and other compatible image formats.')}
               </p>
             </div>
             <div className="md:col-span-2">
-              <Campo label="Objetivo principal" value={perfil.objetivoPrincipal} onChange={(value) => setPerfil({ ...perfil, objetivoPrincipal: value })} />
+              <Campo label={t('Objetivo principal', 'Main goal')} value={perfil.objetivoPrincipal} onChange={(value) => setPerfil({ ...perfil, objetivoPrincipal: value })} />
             </div>
             <div className="md:col-span-2">
-              <Etiqueta>Resumen personal</Etiqueta>
+              <Etiqueta>{t('Resumen personal', 'Personal summary')}</Etiqueta>
               <textarea
                 value={perfil.bio}
                 onChange={(e) => setPerfil({ ...perfil, bio: e.target.value })}
@@ -576,7 +559,7 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
             </div>
             <div className="md:col-span-2 flex flex-wrap gap-3">
               <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-                Guardar perfil
+                {t('Guardar perfil', 'Save profile')}
               </button>
               {perfilTieneContenido && (
                 <button
@@ -587,50 +570,50 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
                   }}
                   className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
                 >
-                  Cancelar edicion
+                  {t('Cancelar edicion', 'Cancel editing')}
                 </button>
               )}
             </div>
           </form>
         ) : (
           <TarjetaPerfilGuardado
-            etiqueta="Perfil guardado"
-            titulo={datos.perfil.disciplina || 'Perfil deportivo actualizado'}
-            descripcion={datos.perfil.bio || 'Sin resumen personal registrado.'}
+            etiqueta={t('Perfil guardado', 'Saved profile')}
+            titulo={datos.perfil.disciplina || t('Perfil deportivo actualizado', 'Updated sports profile')}
+            descripcion={datos.perfil.bio || t('Sin resumen personal registrado.', 'No personal summary saved yet.')}
             foto={datos.perfil.foto}
             campos={[
-              { label: 'Disciplina', value: datos.perfil.disciplina },
-              { label: 'Categoria', value: datos.perfil.categoria },
-              { label: 'Equipo', value: datos.perfil.equipo },
-              { label: 'Objetivo principal', value: datos.perfil.objetivoPrincipal },
+              { label: t('Disciplina', 'Discipline'), value: datos.perfil.disciplina },
+              { label: t('Categoria', 'Category'), value: datos.perfil.categoria },
+              { label: t('Equipo', 'Team'), value: datos.perfil.equipo },
+              { label: t('Objetivo principal', 'Main goal'), value: datos.perfil.objetivoPrincipal },
             ]}
-            accionTexto="Editar perfil"
+            accionTexto={t('Editar perfil', 'Edit profile')}
             onAccion={() => setEditandoPerfil(true)}
           />
         )}
 
         <div className="hidden">
           <ResumenAsignadoSimple
-            titulo="Metas asignadas"
-            vacio="Aun no tienes metas asignadas."
+            titulo={t('Metas asignadas', 'Assigned goals')}
+            vacio={t('Aun no tienes metas asignadas.', 'You do not have any assigned goals yet.')}
             items={datos.metas}
             render={(meta) => `${meta.titulo} · ${meta.progreso}/${meta.objetivo}`}
           />
           <ResumenAsignadoSimple
-            titulo="Sesiones asignadas"
-            vacio="Aun no tienes sesiones asignadas."
+            titulo={t('Sesiones asignadas', 'Assigned sessions')}
+            vacio={t('Aun no tienes sesiones asignadas.', 'You do not have any assigned sessions yet.')}
             items={datos.sesiones}
             render={(sesion) => `${sesion.tipo} · ${sesion.fecha}`}
           />
           <ResumenAsignadoSimple
-            titulo="Competencias asignadas"
-            vacio="Aun no tienes competencias asignadas."
+            titulo={t('Competencias asignadas', 'Assigned competitions')}
+            vacio={t('Aun no tienes competencias asignadas.', 'You do not have any assigned competitions yet.')}
             items={datos.competencias}
             render={(competencia) => `${competencia.nombre} · ${competencia.fecha}`}
           />
           <ResumenAsignadoSimple
-            titulo="Seguimiento"
-            vacio="Aun no hay observaciones de tu entrenador."
+            titulo={t('Seguimiento', 'Tracking')}
+            vacio={t('Aun no hay observaciones de tu entrenador.', 'There are no coach observations yet.')}
             items={datos.observaciones}
             render={(observacion) => `${observacion.prioridad} - ${observacion.nota}`}
           />
@@ -644,26 +627,26 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <form onSubmit={agregarEstadistica} className="space-y-4">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Nuevo registro</p>
-            <h3 className="mt-2 text-2xl font-semibold">Agregar estadistica</h3>
+            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Nuevo registro', 'New entry')}</p>
+            <h3 className="mt-2 text-2xl font-semibold">{t('Agregar estadistica', 'Add statistic')}</h3>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <Campo label="Fecha" type="date" value={nuevaEstadistica.fecha} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, fecha: value })} />
-            <Campo label="Valor" type="number" value={nuevaEstadistica.valor} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, valor: value })} />
-            <Campo label="Disciplina" value={nuevaEstadistica.disciplina} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, disciplina: value })} />
-            <Campo label="Metrica" value={nuevaEstadistica.metrica} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, metrica: value })} />
+            <Campo label={t('Fecha', 'Date')} type="date" value={nuevaEstadistica.fecha} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, fecha: value })} />
+            <Campo label={t('Valor', 'Value')} type="number" value={nuevaEstadistica.valor} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, valor: value })} />
+            <Campo label={t('Disciplina', 'Discipline')} value={nuevaEstadistica.disciplina} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, disciplina: value })} />
+            <Campo label={t('Metrica', 'Metric')} value={nuevaEstadistica.metrica} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, metrica: value })} />
             <div className="md:col-span-2">
-              <Campo label="Competencia o contexto" value={nuevaEstadistica.competencia} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, competencia: value })} />
+              <Campo label={t('Competencia o contexto', 'Competition or context')} value={nuevaEstadistica.competencia} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, competencia: value })} />
             </div>
           </div>
           <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-            Guardar estadistica
+            {t('Guardar estadistica', 'Save statistic')}
           </button>
         </form>
 
         <div className="space-y-4">
           {datos.estadisticas.length === 0 ? (
-            <EstadoVacio mensaje="Todavia no has registrado estadisticas personales." />
+            <EstadoVacio mensaje={t('Todavia no has registrado estadisticas personales.', 'You have not recorded personal statistics yet.')} />
           ) : (
             datos.estadisticas.map((item) => (
               <div key={item.id} className="rounded-2xl border border-white/8 bg-white/5 p-4">
@@ -688,14 +671,14 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
   if (moduloActivo === 'sesiones') {
     return (
       <ListadoAsignaciones
-        titulo="Sesiones y entrenamientos asignados"
-        vacio="Todavia no tienes sesiones asignadas por un entrenador."
+        titulo={t('Sesiones y entrenamientos asignados', 'Assigned sessions and training')}
+        vacio={t('Todavia no tienes sesiones asignadas por un entrenador.', 'You do not have sessions assigned by a coach yet.')}
         items={datos.sesiones}
         renderItem={(sesion) => (
           <>
             <div>
               <h4 className="font-semibold">{sesion.tipo}</h4>
-              <p className="mt-1 text-sm text-slate-300">{sesion.descripcion || 'Sin descripcion adicional.'}</p>
+              <p className="mt-1 text-sm text-slate-300">{sesion.descripcion || t('Sin descripcion adicional.', 'No additional description.')}</p>
               <p className="mt-2 text-xs uppercase tracking-[0.2em] text-cyan-300">{sesion.entrenadorNombre}</p>
             </div>
             <div className="text-right">
@@ -711,20 +694,20 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
   if (moduloActivo === 'metas') {
     return (
       <ListadoAsignaciones
-        titulo="Metas asignadas"
-        vacio="Todavia no tienes metas asignadas por un entrenador."
+        titulo={t('Metas asignadas', 'Assigned goals')}
+        vacio={t('Todavia no tienes metas asignadas por un entrenador.', 'You do not have goals assigned by a coach yet.')}
         items={metasLocales}
         renderItem={(meta) => (
           <div className="w-full">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h4 className="font-semibold">{meta.titulo}</h4>
-                <p className="mt-1 text-sm text-slate-300">{meta.descripcion || 'Sin descripcion adicional.'}</p>
+                <p className="mt-1 text-sm text-slate-300">{meta.descripcion || t('Sin descripcion adicional.', 'No additional description.')}</p>
                 <p className="mt-2 text-xs uppercase tracking-[0.2em] text-cyan-300">{meta.entrenadorNombre}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-slate-300">{meta.progreso} / {meta.objetivo}</p>
-                <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">{meta.fechaLimite || 'Sin fecha limite'}</p>
+                <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">{meta.fechaLimite || t('Sin fecha limite', 'No deadline')}</p>
               </div>
             </div>
             <div className="mt-4 h-3 rounded-full bg-slate-800">
@@ -735,7 +718,7 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
               <Campo
-                label="Progreso actual"
+                label={t('Progreso actual', 'Current progress')}
                 type="number"
                 value={meta.progreso}
                 onChange={(value) =>
@@ -756,7 +739,7 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
                 }
               />
               <div>
-                <Etiqueta>Estado</Etiqueta>
+                <Etiqueta>{t('Estado', 'Status')}</Etiqueta>
                 <select
                   value={meta.estado}
                   onChange={(e) =>
@@ -770,9 +753,9 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
                   }
                   className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
                 >
-                  <option value="en progreso">En progreso</option>
-                  <option value="completada">Completada</option>
-                  <option value="pausada">Pausada</option>
+                  <option value="en progreso">{t('En progreso', 'In progress')}</option>
+                  <option value="completada">{t('Completada', 'Completed')}</option>
+                  <option value="pausada">{t('Pausada', 'Paused')}</option>
                 </select>
               </div>
               <div className="flex items-end">
@@ -786,7 +769,7 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
                   }}
                   className="w-full rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300"
                 >
-                  Guardar progreso
+                  {t('Guardar progreso', 'Save progress')}
                 </button>
               </div>
             </div>
@@ -799,18 +782,18 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
   if (moduloActivo === 'competencias') {
     return (
       <ListadoAsignaciones
-        titulo="Competencias asignadas"
-        vacio="Todavia no tienes competencias asignadas."
+        titulo={t('Competencias asignadas', 'Assigned competitions')}
+        vacio={t('Todavia no tienes competencias asignadas.', 'You do not have competitions assigned yet.')}
         items={datos.competencias}
         renderItem={(competencia) => (
           <>
             <div>
               <h4 className="font-semibold">{competencia.nombre}</h4>
-              <p className="mt-1 text-sm text-slate-300">{competencia.ubicacion || 'Ubicacion por definir'}</p>
+              <p className="mt-1 text-sm text-slate-300">{competencia.ubicacion || t('Ubicacion por definir', 'Location to be defined')}</p>
               <p className="mt-2 text-xs uppercase tracking-[0.2em] text-cyan-300">{competencia.entrenadorNombre}</p>
             </div>
             <div className="text-right">
-              <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs text-cyan-200">{competencia.estado || competencia.resultado || 'Asignada'}</span>
+              <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs text-cyan-200">{competencia.estado || competencia.resultado || t('Asignada', 'Assigned')}</span>
               <p className="mt-3 text-sm text-slate-400">{competencia.fecha}</p>
             </div>
           </>
@@ -821,11 +804,11 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
 
   return (
     <div>
-      <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Reconocimientos</p>
-      <h3 className="mt-2 text-2xl font-semibold">Logros del deportista</h3>
+      <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Reconocimientos', 'Recognitions')}</p>
+      <h3 className="mt-2 text-2xl font-semibold">{t('Logros del deportista', 'Athlete achievements')}</h3>
       {datos.logros.length === 0 && ranking.length === 0 ? (
         <div className="mt-6">
-          <EstadoVacio mensaje="Tus logros apareceran aqui cuando completes metas o acumules avances relevantes." />
+          <EstadoVacio mensaje={t('Tus logros apareceran aqui cuando completes metas o acumules avances relevantes.', 'Your achievements will appear here when you complete goals or accumulate meaningful progress.')} />
         </div>
       ) : (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -998,26 +981,26 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
   const FiltrosEntrenador = (
     <div className="mb-6 grid gap-4 rounded-2xl border border-white/8 bg-white/5 p-4 md:grid-cols-3">
       <div>
-        <Etiqueta>Filtrar por deportista</Etiqueta>
+        <Etiqueta>{t('Filtrar por deportista', 'Filter by athlete')}</Etiqueta>
         <select
           value={filtroDeportistaId}
           onChange={(e) => setFiltroDeportistaId(e.target.value)}
           className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
         >
-          <option value="">Todos</option>
+          <option value="">{t('Todos', 'All')}</option>
           {opcionesDeportistas.map((deportista) => (
             <option key={deportista.id} value={deportista.id}>{deportista.nombre}</option>
           ))}
         </select>
       </div>
       <div>
-        <Etiqueta>Filtrar por disciplina</Etiqueta>
+        <Etiqueta>{t('Filtrar por disciplina', 'Filter by discipline')}</Etiqueta>
         <select
           value={filtroDisciplina}
           onChange={(e) => setFiltroDisciplina(e.target.value)}
           className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
         >
-          <option value="">Todas</option>
+          <option value="">{t('Todas', 'All')}</option>
           {disciplinas.map((disciplina) => (
             <option key={disciplina} value={disciplina}>{disciplina}</option>
           ))}
@@ -1032,7 +1015,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           }}
           className="w-full rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
         >
-          Limpiar filtros
+          {t('Limpiar filtros', 'Clear filters')}
         </button>
       </div>
     </div>
@@ -1043,14 +1026,14 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-6">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Perfil profesional</p>
-            <h3 className="mt-2 text-2xl font-semibold">Configuracion del entrenador</h3>
+            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Perfil profesional', 'Professional profile')}</p>
+            <h3 className="mt-2 text-2xl font-semibold">{t('Configuracion del entrenador', 'Coach settings')}</h3>
             <p className="mt-3 max-w-xl text-sm text-slate-300">
-              Esta ficha resume su enfoque de trabajo y mantiene el perfil alineado con el estilo visual del tablero.
+              {t('Esta ficha resume su enfoque de trabajo y mantiene el perfil alineado con el estilo visual del tablero.', 'This card summarizes your coaching focus and keeps your profile aligned with the dashboard visual style.')}
             </p>
           </div>
           {!perfilTieneContenido && (
-            <EstadoVacio mensaje="Todavia no ha guardado su perfil profesional." />
+            <EstadoVacio mensaje={t('Todavia no ha guardado su perfil profesional.', 'You have not saved your professional profile yet.')} />
           )}
         </div>
 
@@ -1067,7 +1050,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             <Campo label="Categoria" value={perfil.categoria} onChange={(value) => setPerfil({ ...perfil, categoria: value })} />
             <Campo label="Equipo" value={perfil.equipo} onChange={(value) => setPerfil({ ...perfil, equipo: value })} />
             <div className="md:col-span-2">
-              <Etiqueta>Foto de perfil</Etiqueta>
+              <Etiqueta>{t('Foto de perfil', 'Profile picture')}</Etiqueta>
               <input
                 type="file"
                 accept="image/*"
@@ -1075,11 +1058,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                 className="mt-2 block w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-200"
               />
               <p className="mt-2 text-xs text-slate-400">
-                Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.
+                {t('Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.', 'You can upload JPG, JPEG, PNG, WEBP, GIF, SVG and other compatible image formats.')}
               </p>
             </div>
             <div className="md:col-span-2">
-              <Etiqueta>Metodologia</Etiqueta>
+              <Etiqueta>{t('Metodologia', 'Methodology')}</Etiqueta>
               <textarea
                 value={perfil.metodologia}
                 onChange={(e) => setPerfil({ ...perfil, metodologia: e.target.value })}
@@ -1088,7 +1071,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             </div>
             <div className="md:col-span-2 flex flex-wrap gap-3">
               <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-                Guardar perfil
+                {t('Guardar perfil', 'Save profile')}
               </button>
               {perfilTieneContenido && (
                 <button
@@ -1099,23 +1082,23 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                   }}
                   className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
                 >
-                  Cancelar edicion
+                  {t('Cancelar edicion', 'Cancel editing')}
                 </button>
               )}
             </div>
           </form>
         ) : (
           <TarjetaPerfilGuardado
-            etiqueta="Perfil guardado"
-            titulo={datos.perfil.especialidad || 'Entrenador registrado'}
-            descripcion={datos.perfil.metodologia || 'Sin metodologia registrada.'}
+            etiqueta={t('Perfil guardado', 'Saved profile')}
+            titulo={datos.perfil.especialidad || t('Entrenador registrado', 'Registered coach')}
+            descripcion={datos.perfil.metodologia || t('Sin metodologia registrada.', 'No methodology saved yet.')}
             foto={datos.perfil.foto}
             campos={[
-              { label: 'Especialidad', value: datos.perfil.especialidad },
-              { label: 'Categoria', value: datos.perfil.categoria },
-              { label: 'Equipo', value: datos.perfil.equipo },
+              { label: t('Especialidad', 'Specialty'), value: datos.perfil.especialidad },
+              { label: t('Categoria', 'Category'), value: datos.perfil.categoria },
+              { label: t('Equipo', 'Team'), value: datos.perfil.equipo },
             ]}
-            accionTexto="Editar perfil"
+            accionTexto={t('Editar perfil', 'Edit profile')}
             onAccion={() => setEditandoPerfil(true)}
           />
         )}
@@ -1138,22 +1121,22 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           className="space-y-4"
         >
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Vinculacion real</p>
-            <h3 className="mt-2 text-2xl font-semibold">Agregar deportista por correo</h3>
+            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Vinculacion real', 'Real linking')}</p>
+            <h3 className="mt-2 text-2xl font-semibold">{t('Agregar deportista por correo', 'Add athlete by email')}</h3>
             <p className="mt-2 text-sm text-slate-300">
-              El deportista debe existir como usuario registrado con rol de deportista.
+              {t('El deportista debe existir como usuario registrado con rol de deportista.', 'The athlete must already exist as a registered user with the athlete role.')}
             </p>
           </div>
-          <Campo label="Correo del deportista" type="email" value={correoDeportista} onChange={setCorreoDeportista} />
+          <Campo label={t('Correo del deportista', 'Athlete email')} type="email" value={correoDeportista} onChange={setCorreoDeportista} />
           <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-            Vincular deportista
+            {t('Vincular deportista', 'Link athlete')}
           </button>
         </form>
 
         <div className="space-y-4">
           {FiltrosEntrenador}
           {deportistasFiltrados.length === 0 ? (
-            <EstadoVacio mensaje="Aun no tienes deportistas vinculados. Registre primero sus cuentas y luego agreguelos por correo." />
+            <EstadoVacio mensaje={t('Aun no tienes deportistas vinculados. Registre primero sus cuentas y luego agreguelos por correo.', 'You do not have linked athletes yet. Register their accounts first and then add them by email.')} />
           ) : (
             deportistasFiltrados.map((deportista) => (
               <div key={deportista.id} className="rounded-2xl border border-white/8 bg-white/5 p-4">
@@ -1161,7 +1144,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                   <div>
                     <h4 className="font-semibold">{deportista.nombre}</h4>
                     <p className="mt-1 text-sm text-slate-300">{deportista.correo}</p>
-                    <p className="mt-2 text-sm text-slate-400">{deportista.disciplina || 'Disciplina pendiente'}</p>
+                    <p className="mt-2 text-sm text-slate-400">{deportista.disciplina || t('Disciplina pendiente', 'Discipline pending')}</p>
                   </div>
                   <div className="text-right">
                     <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-sm text-cyan-200">{deportista.progreso}%</span>
@@ -1201,7 +1184,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                         }}
                         className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
                       >
-                        Desvincular
+                        {t('Desvincular', 'Unlink')}
                       </button>
                     </div>
                   </div>
@@ -1250,13 +1233,13 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           className="space-y-4"
         >
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Asignacion multiple</p>
-            <h3 className="mt-2 text-2xl font-semibold">{edicionSesionId ? 'Editar sesion' : 'Crear sesion'}</h3>
+            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Asignacion multiple', 'Multi assignment')}</p>
+            <h3 className="mt-2 text-2xl font-semibold">{edicionSesionId ? t('Editar sesion', 'Edit session') : t('Crear sesion', 'Create session')}</h3>
           </div>
           <Campo label="Fecha" type="date" value={nuevaSesion.fecha} onChange={(value) => setNuevaSesion({ ...nuevaSesion, fecha: value })} />
-          <Campo label="Tipo de sesion" value={nuevaSesion.tipo} onChange={(value) => setNuevaSesion({ ...nuevaSesion, tipo: value })} />
+          <Campo label={t('Tipo de sesion', 'Session type')} value={nuevaSesion.tipo} onChange={(value) => setNuevaSesion({ ...nuevaSesion, tipo: value })} />
           <div>
-            <Etiqueta>Descripcion</Etiqueta>
+            <Etiqueta>{t('Descripcion', 'Description')}</Etiqueta>
             <textarea
               value={nuevaSesion.descripcion}
               onChange={(e) => setNuevaSesion({ ...nuevaSesion, descripcion: e.target.value })}
@@ -1264,14 +1247,14 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             />
           </div>
           <div>
-            <Etiqueta>Estado</Etiqueta>
+            <Etiqueta>{t('Estado', 'Status')}</Etiqueta>
             <select
               value={nuevaSesion.estado}
               onChange={(e) => setNuevaSesion({ ...nuevaSesion, estado: e.target.value })}
               className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
             >
-              <option value="pendiente">Pendiente</option>
-              <option value="finalizada">Finalizada</option>
+              <option value="pendiente">{t('Pendiente', 'Pending')}</option>
+              <option value="finalizada">{t('Finalizada', 'Completed')}</option>
             </select>
           </div>
           <SelectorDeportistas
@@ -1281,7 +1264,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           />
           <div className="flex gap-3">
             <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-              {edicionSesionId ? 'Actualizar sesion' : 'Guardar sesion'}
+              {edicionSesionId ? t('Actualizar sesion', 'Update session') : t('Guardar sesion', 'Save session')}
             </button>
             {edicionSesionId && (
               <button
@@ -1289,7 +1272,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                 onClick={resetSesion}
                 className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
               >
-                Cancelar
+                {t('Cancelar', 'Cancel')}
               </button>
             )}
           </div>
@@ -1298,14 +1281,14 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         <div>
           {FiltrosEntrenador}
           <ListaEntrenadorAsignaciones
-          titulo="Sesiones creadas"
-          vacio="No hay sesiones creadas todavia."
+          titulo={t('Sesiones creadas', 'Created sessions')}
+          vacio={t('No hay sesiones creadas todavia.', 'There are no created sessions yet.')}
           items={sesionesFiltradas}
           renderItem={(sesion) => (
             <div className="flex w-full flex-wrap items-start justify-between gap-4">
               <div>
                 <h4 className="font-semibold">{sesion.tipo}</h4>
-                <p className="mt-1 text-sm text-slate-300">{sesion.descripcion || 'Sin descripcion adicional.'}</p>
+                <p className="mt-1 text-sm text-slate-300">{sesion.descripcion || t('Sin descripcion adicional.', 'No additional description.')}</p>
                 <p className="mt-2 text-sm text-cyan-300">{(sesion.asignadoNombres || []).join(', ')}</p>
               </div>
               <div className="text-right">
@@ -1326,7 +1309,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     }}
                     className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
                   >
-                    Editar
+                    {t('Editar', 'Edit')}
                   </button>
                   <button
                     type="button"
@@ -1339,7 +1322,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     }}
                     className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
                   >
-                    Eliminar
+                    {t('Eliminar', 'Delete')}
                   </button>
                 </div>
               </div>
@@ -1399,11 +1382,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         >
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Objetivos asignados</p>
-            <h3 className="mt-2 text-2xl font-semibold">{edicionMetaId ? 'Editar meta' : 'Crear meta'}</h3>
+            <h3 className="mt-2 text-2xl font-semibold">{edicionMetaId ? t('Editar meta', 'Edit goal') : t('Crear meta', 'Create goal')}</h3>
           </div>
           <Campo label="Titulo" value={nuevaMeta.titulo} onChange={(value) => setNuevaMeta({ ...nuevaMeta, titulo: value })} />
           <div>
-            <Etiqueta>Descripcion</Etiqueta>
+            <Etiqueta>{t('Descripcion', 'Description')}</Etiqueta>
             <textarea
               value={nuevaMeta.descripcion}
               onChange={(e) => setNuevaMeta({ ...nuevaMeta, descripcion: e.target.value })}
@@ -1467,7 +1450,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                       }
                     />
                     <div>
-                      <Etiqueta>Estado</Etiqueta>
+                      <Etiqueta>{t('Estado', 'Status')}</Etiqueta>
                       <select
                         value={asignacion?.estado ?? 'en progreso'}
                         onChange={(e) =>
@@ -1482,9 +1465,9 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                         }
                         className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
                       >
-                        <option value="en progreso">En progreso</option>
-                        <option value="completada">Completada</option>
-                        <option value="pausada">Pausada</option>
+                        <option value="en progreso">{t('En progreso', 'In progress')}</option>
+                        <option value="completada">{t('Completada', 'Completed')}</option>
+                        <option value="pausada">{t('Pausada', 'Paused')}</option>
                       </select>
                     </div>
                   </div>
@@ -1494,7 +1477,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           )}
           <div className="flex gap-3">
             <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-              {edicionMetaId ? 'Actualizar meta' : 'Guardar meta'}
+              {edicionMetaId ? t('Actualizar meta', 'Update goal') : t('Guardar meta', 'Save goal')}
             </button>
             {edicionMetaId && (
               <button
@@ -1502,7 +1485,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                 onClick={resetMeta}
                 className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
               >
-                Cancelar
+                {t('Cancelar', 'Cancel')}
               </button>
             )}
           </div>
@@ -1519,12 +1502,12 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h4 className="font-semibold">{meta.titulo}</h4>
-                  <p className="mt-1 text-sm text-slate-300">{meta.descripcion || 'Sin descripcion adicional.'}</p>
+                  <p className="mt-1 text-sm text-slate-300">{meta.descripcion || t('Sin descripcion adicional.', 'No additional description.')}</p>
                   <p className="mt-2 text-sm text-cyan-300">{(meta.asignadoNombres || []).join(', ')}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-slate-300">{meta.estado}</p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">{meta.fechaLimite || 'Sin fecha limite'}</p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.2em] text-slate-400">{meta.fechaLimite || t('Sin fecha limite', 'No deadline')}</p>
                 </div>
               </div>
               <div className="mt-4 space-y-2">
@@ -1567,7 +1550,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                   }}
                   className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
                 >
-                  Editar
+                  {t('Editar', 'Edit')}
                 </button>
                 <button
                   type="button"
@@ -1580,7 +1563,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                   }}
                   className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
                 >
-                  Eliminar
+                  {t('Eliminar', 'Delete')}
                 </button>
               </div>
             </div>
@@ -1628,7 +1611,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         >
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Eventos compartidos</p>
-            <h3 className="mt-2 text-2xl font-semibold">{edicionCompetenciaId ? 'Editar competencia' : 'Crear competencia'}</h3>
+            <h3 className="mt-2 text-2xl font-semibold">{edicionCompetenciaId ? t('Editar competencia', 'Edit competition') : t('Crear competencia', 'Create competition')}</h3>
           </div>
           <Campo label="Nombre" value={nuevaCompetencia.nombre} onChange={(value) => setNuevaCompetencia({ ...nuevaCompetencia, nombre: value })} />
           <Campo label="Fecha" type="date" value={nuevaCompetencia.fecha} onChange={(value) => setNuevaCompetencia({ ...nuevaCompetencia, fecha: value })} />
@@ -1642,7 +1625,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           />
           <div className="flex gap-3">
             <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-              {edicionCompetenciaId ? 'Actualizar competencia' : 'Guardar competencia'}
+              {edicionCompetenciaId ? t('Actualizar competencia', 'Update competition') : t('Guardar competencia', 'Save competition')}
             </button>
             {edicionCompetenciaId && (
               <button
@@ -1650,7 +1633,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                 onClick={resetCompetencia}
                 className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
               >
-                Cancelar
+                {t('Cancelar', 'Cancel')}
               </button>
             )}
           </div>
@@ -1659,18 +1642,18 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         <div>
           {FiltrosEntrenador}
           <ListaEntrenadorAsignaciones
-          titulo="Competencias creadas"
-          vacio="No hay competencias creadas todavia."
+          titulo={t('Competencias creadas', 'Created competitions')}
+          vacio={t('No hay competencias creadas todavia.', 'There are no created competitions yet.')}
           items={competenciasFiltradas}
           renderItem={(competencia) => (
             <div className="flex w-full flex-wrap items-start justify-between gap-4">
               <div>
                 <h4 className="font-semibold">{competencia.nombre}</h4>
-                <p className="mt-1 text-sm text-slate-300">{competencia.ubicacion || 'Ubicacion por definir'}</p>
+                <p className="mt-1 text-sm text-slate-300">{competencia.ubicacion || t('Ubicacion por definir', 'Location to be defined')}</p>
                 <p className="mt-2 text-sm text-cyan-300">{(competencia.asignadoNombres || []).join(', ')}</p>
               </div>
               <div className="text-right">
-                <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs text-cyan-200">{competencia.estado || competencia.resultado || 'Asignada'}</span>
+                <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs text-cyan-200">{competencia.estado || competencia.resultado || t('Asignada', 'Assigned')}</span>
                 <p className="mt-3 text-sm text-slate-400">{competencia.fecha}</p>
                 <div className="mt-4 flex justify-end gap-2">
                   <button
@@ -1689,7 +1672,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     }}
                     className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
                   >
-                    Editar
+                    {t('Editar', 'Edit')}
                   </button>
                   <button
                     type="button"
@@ -1702,7 +1685,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     }}
                     className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
                   >
-                    Eliminar
+                    {t('Eliminar', 'Delete')}
                   </button>
                 </div>
               </div>
@@ -1749,11 +1732,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         className="space-y-4"
       >
         <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">Seguimiento individual</p>
-          <h3 className="mt-2 text-2xl font-semibold">{edicionObservacionId ? 'Editar observacion' : 'Registrar observacion'}</h3>
+          <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Seguimiento individual', 'Individual tracking')}</p>
+          <h3 className="mt-2 text-2xl font-semibold">{edicionObservacionId ? t('Editar observacion', 'Edit observation') : t('Registrar observacion', 'Register observation')}</h3>
         </div>
         <div>
-          <Etiqueta>Deportista</Etiqueta>
+          <Etiqueta>{t('Deportista', 'Athlete')}</Etiqueta>
           <select
             value={nuevaObservacion.deportistaId}
             onChange={(e) => {
@@ -1766,24 +1749,24 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             }}
             className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
           >
-            <option value="">Seleccione un deportista</option>
+            <option value="">{t('Seleccione un deportista', 'Select an athlete')}</option>
             {opcionesDeportistas.map((deportista) => (
               <option key={deportista.id} value={deportista.id}>{deportista.nombre}</option>
             ))}
           </select>
         </div>
         <div>
-          <Etiqueta>Nota tecnica</Etiqueta>
+          <Etiqueta>{t('Nota tecnica', 'Technical note')}</Etiqueta>
           <textarea
             value={nuevaObservacion.nota}
             onChange={(e) => setNuevaObservacion({ ...nuevaObservacion, nota: e.target.value })}
             className="mt-2 min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
           />
         </div>
-        <Campo label="Prioridad" value={nuevaObservacion.prioridad} onChange={(value) => setNuevaObservacion({ ...nuevaObservacion, prioridad: value })} />
+        <Campo label={t('Prioridad', 'Priority')} value={nuevaObservacion.prioridad} onChange={(value) => setNuevaObservacion({ ...nuevaObservacion, prioridad: value })} />
         <div className="flex gap-3">
           <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-            {edicionObservacionId ? 'Actualizar observacion' : 'Guardar observacion'}
+            {edicionObservacionId ? t('Actualizar observacion', 'Update observation') : t('Guardar observacion', 'Save observation')}
           </button>
           {edicionObservacionId && (
             <button
@@ -1791,7 +1774,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
               onClick={resetObservacion}
               className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
             >
-              Cancelar
+              {t('Cancelar', 'Cancel')}
             </button>
           )}
         </div>
@@ -1800,8 +1783,8 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
       <div>
         {FiltrosEntrenador}
         <ListaEntrenadorAsignaciones
-        titulo="Observaciones registradas"
-        vacio="No hay observaciones registradas todavia."
+        titulo={t('Observaciones registradas', 'Saved observations')}
+        vacio={t('No hay observaciones registradas todavia.', 'There are no saved observations yet.')}
         items={observacionesFiltradas}
         renderItem={(observacion) => (
           <div className="w-full">
@@ -1824,7 +1807,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                 }}
                 className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
               >
-                Editar
+                {t('Editar', 'Edit')}
               </button>
               <button
                 type="button"
@@ -1837,7 +1820,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                 }}
                 className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
               >
-                Eliminar
+                {t('Eliminar', 'Delete')}
               </button>
             </div>
           </div>
@@ -2006,10 +1989,10 @@ function SelectorDeportistas({ deportistas, seleccionados, onToggle }) {
 
   return (
     <div>
-      <Etiqueta>Deportistas asignados</Etiqueta>
+      <Etiqueta>{t('Deportistas asignados', 'Assigned athletes')}</Etiqueta>
       <div className={`mt-3 space-y-3 rounded-2xl border p-4 ${esOscuro ? 'border-white/10 bg-slate-950/60' : 'border-slate-200 bg-white/80'}`}>
         {deportistas.length === 0 ? (
-          <EstadoVacio mensaje="Primero vincule deportistas reales para poder asignarles sesiones, metas o competencias." />
+          <EstadoVacio mensaje={t('Primero vincule deportistas reales para poder asignarles sesiones, metas o competencias.', 'Link real athletes first so you can assign sessions, goals or competitions.')} />
         ) : (
           deportistas.map((deportista) => (
             <label key={deportista.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 ${esOscuro ? 'border-white/8 bg-white/5' : 'border-slate-200 bg-slate-50/80'}`}>
