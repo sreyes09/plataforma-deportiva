@@ -27,6 +27,18 @@ const authServicio = {
     const respuesta = await axios.get(`${URL_BASE}/auth/reglas-contrasena`)
     return respuesta.data
   },
+
+  // Inicia la recuperacion enviando un codigo temporal al correo registrado.
+  solicitarRestablecimiento: async (datos) => {
+    const respuesta = await axios.post(`${URL_BASE}/auth/solicitar-restablecimiento`, datos)
+    return respuesta.data
+  },
+
+  // Completa el restablecimiento usando el codigo temporal y la nueva contrasena.
+  restablecerContrasena: async (datos) => {
+    const respuesta = await axios.post(`${URL_BASE}/auth/restablecer-contrasena`, datos)
+    return respuesta.data
+  },
 }
 
 export default authServicio

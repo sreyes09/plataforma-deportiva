@@ -1,10 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -23,6 +27,7 @@ import {
   construirSerieDeportista,
   crearPanelVacio,
   normalizarPanel,
+  obtenerResumenAdministrador,
   obtenerOpcionesDeportistas,
   obtenerResumenDeportista,
   obtenerResumenEntrenador,
@@ -32,7 +37,32 @@ import panelServicio from '../servicios/panelServicio'
 // Paleta visual reutilizada por los graficos del tablero.
 const coloresGrafico = ['#22d3ee', '#f59e0b', '#38bdf8', '#fb7185']
 
-// Genera las pestañas principales en el idioma activo para no duplicar el dashboard.
+// Normaliza textos para que las busquedas ignoren mayusculas y tildes.
+const normalizarTexto = (valor = '') =>
+  String(valor)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+
+// Comprueba si un bloque de texto contiene el termino consultado.
+const textoIncluye = (texto, termino) =>
+  normalizarTexto(texto).includes(normalizarTexto(termino))
+
+// Limpia residuos visuales de codificacion vieja antes de mostrarlos en la interfaz.
+const limpiarTextoVisual = (valor = '') =>
+  String(valor || '')
+    .replace(/Â/g, '')
+    .replace(/Ã¡/g, 'á')
+    .replace(/Ã©/g, 'é')
+    .replace(/Ã­/g, 'í')
+    .replace(/Ã³/g, 'ó')
+    .replace(/Ãº/g, 'ú')
+    .replace(/Ã±/g, 'ñ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+// Genera las pestaÃ±as principales en el idioma activo para no duplicar el dashboard.
 const crearModulosDeportista = (t) => [
   { id: 'perfil', titulo: t('Perfil deportivo', 'Sports profile'), descripcion: t('Actualiza tus datos personales y disciplina.', 'Update your personal details and discipline.') },
   { id: 'estadisticas', titulo: t('Estadisticas', 'Statistics'), descripcion: t('Registra tu rendimiento individual.', 'Track your individual performance.') },
@@ -52,6 +82,13 @@ const crearModulosEntrenador = (t) => [
   { id: 'seguimiento', titulo: t('Seguimiento', 'Tracking'), descripcion: t('Registra observaciones individuales.', 'Record individual observations.') },
 ]
 
+// Vista del administrador para supervisar usuarios y el estado general de la plataforma.
+const crearModulosAdministrador = (t) => [
+  { id: 'perfil', titulo: t('Perfil del administrador', 'Administrator profile'), descripcion: t('Gestiona tu ficha institucional dentro de Vyrox.', 'Manage your institutional profile inside Vyrox.') },
+  { id: 'usuarios', titulo: t('Usuarios inscritos', 'Registered users'), descripcion: t('Revisa deportistas, entrenadores y administradores registrados.', 'Review registered athletes, coaches, and administrators.') },
+  { id: 'supervision', titulo: t('Supervisión general', 'General oversight'), descripcion: t('Consulta actividad, volumen y comportamiento global de la plataforma.', 'Review platform-wide activity, volume, and behavior.') },
+]
+
 // Pantalla principal del sistema. Cambia dinamicamente segun el rol autenticado.
 function Tablero() {
   const { usuario, cerrarSesion } = useAuth()
@@ -62,10 +99,14 @@ function Tablero() {
   const [guardando, setGuardando] = useState(false)
   const [errorApi, setErrorApi] = useState('')
   const [moduloActivo, setModuloActivo] = useState(() =>
-    usuario?.rol === 'entrenador' ? 'deportistas' : 'perfil'
+    usuario?.rol === 'entrenador'
+      ? 'deportistas'
+      : usuario?.rol === 'administrador'
+        ? 'usuarios'
+        : 'perfil'
   )
 
-  // Carga el panel del usuario apenas exista una sesión válida.
+  // Carga el panel del usuario apenas exista una sesion vÃ¡lida.
   useEffect(() => {
     if (!usuario) return
 
@@ -78,7 +119,7 @@ function Tablero() {
         setDatos(normalizarPanel(usuario, respuesta))
       } catch (error) {
         setDatos(crearPanelVacio(usuario))
-        setErrorApi(error.response?.data?.mensaje || 'No se pudo cargar la información del panel.')
+        setErrorApi(error.response?.data?.mensaje || 'No se pudo cargar la informaciÃ³n del panel.')
       } finally {
         setCargando(false)
       }
@@ -87,7 +128,7 @@ function Tablero() {
     cargarPanel()
   }, [usuario])
 
-  // Cierra la sesión y devuelve al login público.
+  // Cierra la sesion y devuelve al login pÃºblico.
   const manejarCerrarSesion = () => {
     cerrarSesion()
     navegar('/')
@@ -130,9 +171,60 @@ function Tablero() {
     }
   }
 
+  // Cambia el estado activo/inactivo de una cuenta desde la vista administrativa.
+  const cambiarEstadoUsuario = async (usuarioId, estado) => {
+    setGuardando(true)
+    setErrorApi('')
+
+    try {
+      const respuesta = await panelServicio.actualizarEstadoUsuario(usuarioId, estado)
+      setDatos(normalizarPanel(usuario, respuesta))
+      return { ok: true }
+    } catch (error) {
+      const mensaje = error.response?.data?.mensaje || t('No se pudo actualizar el estado del usuario.', 'The user status could not be updated.')
+      setErrorApi(mensaje)
+      return { ok: false, mensaje }
+    } finally {
+      setGuardando(false)
+    }
+  }
+
   // Prepara resumenes y series para no recalcular toda la vista en cada render.
   const contenido = useMemo(() => {
     if (!usuario || !datos) return null
+
+    if (usuario.rol === 'administrador') {
+      const resumen = obtenerResumenAdministrador(datos)
+      return {
+        resumen,
+        seriePrincipal: [
+          { etiqueta: t('Deportistas', 'Athletes'), valor: resumen.deportistas, detalle: t('cuentas deportivas', 'athlete accounts') },
+          { etiqueta: t('Entrenadores', 'Coaches'), valor: resumen.entrenadores, detalle: t('cuentas tecnicas', 'coach accounts') },
+          { etiqueta: t('Admins', 'Admins'), valor: resumen.administradores, detalle: t('control institucional', 'institutional control') },
+          { etiqueta: t('Activos', 'Active'), valor: resumen.activos, detalle: t('cuentas habilitadas', 'enabled accounts') },
+        ],
+        serieSecundaria: [
+          { nombre: t('Activos', 'Active'), valor: resumen.activos },
+          { nombre: t('Inactivos', 'Inactive'), valor: resumen.inactivos },
+        ],
+        graficoPrincipal: {
+          etiqueta: t('Panorama de usuarios', 'User panorama'),
+          titulo: t('Distribución actual de cuentas por rol', 'Current account distribution by role'),
+          valorKey: 'valor',
+          detalleKey: 'detalle',
+          nombreValor: t('Usuarios', 'Users'),
+          sufijoValor: '',
+          limitePorcentaje: false,
+        },
+        graficoSecundario: {
+          etiqueta: t('Estado de acceso', 'Access status'),
+          titulo: t(`${resumen.activos} cuentas activas en este momento`, `${resumen.activos} accounts active right now`),
+          porcentajeCentro: resumen.usuarios > 0 ? Math.round((resumen.activos / resumen.usuarios) * 100) : 0,
+          total: resumen.usuarios,
+        },
+        modulos: crearModulosAdministrador(t),
+      }
+    }
 
     if (usuario.rol === 'entrenador') {
       const distribucion = construirPorcentajeMetasEntrenador(datos)
@@ -151,7 +243,7 @@ function Tablero() {
         },
         graficoSecundario: {
           etiqueta: t('Estado general', 'Overall status'),
-          titulo: `${distribucion.porcentaje}% de deportistas al día con sus metas`,
+          titulo: `${distribucion.porcentaje}% de deportistas al dÃ­a con sus metas`,
           porcentajeCentro: distribucion.porcentaje,
           total: distribucion.total,
         },
@@ -193,7 +285,12 @@ function Tablero() {
   }
 
   const esEntrenador = usuario.rol === 'entrenador'
-  const rolTexto = esEntrenador ? t('entrenador', 'coach') : t('deportista', 'athlete')
+  const esAdministrador = usuario.rol === 'administrador'
+  const rolTexto = esAdministrador
+    ? t('administrador', 'administrator')
+    : esEntrenador
+      ? t('entrenador', 'coach')
+      : t('deportista', 'athlete')
 
   return (
     <div className={`min-h-screen ${esOscuro ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -210,13 +307,13 @@ function Tablero() {
 
           <div className="flex flex-wrap items-center justify-end gap-3">
             <ControlPreferencia
-              etiqueta="Theme"
-              valor={tema === 'dark' ? 'Dark' : 'Light'}
+              etiqueta={t('Tema', 'Theme')}
+              valor={tema === 'dark' ? t('Oscuro', 'Dark') : t('Claro', 'Light')}
               onClick={alternarTema}
             />
             <ControlPreferencia
-              etiqueta="Lang"
-              valor={idioma.toUpperCase()}
+              etiqueta={t('Idioma', 'Language')}
+              valor={idioma === 'es' ? t('Español', 'Spanish') : t('Inglés', 'English')}
               onClick={alternarIdioma}
             />
             <div className="text-right">
@@ -234,6 +331,7 @@ function Tablero() {
       </nav>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
+
         {(errorApi || guardando) && (
           <section className="mb-6">
             <div className={`rounded-2xl border px-4 py-3 text-sm ${
@@ -247,7 +345,14 @@ function Tablero() {
         )}
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {esEntrenador ? (
+          {esAdministrador ? (
+            <>
+              <ResumenCard titulo={t('Usuarios', 'Users')} valor={contenido.resumen.usuarios} detalle={t('cuentas registradas', 'registered accounts')} />
+              <ResumenCard titulo={t('Deportistas', 'Athletes')} valor={contenido.resumen.deportistas} detalle={t('usuarios del rendimiento', 'performance users')} />
+              <ResumenCard titulo={t('Entrenadores', 'Coaches')} valor={contenido.resumen.entrenadores} detalle={t('cuentas tecnicas', 'technical accounts')} />
+              <ResumenCard titulo={t('Activos', 'Active')} valor={contenido.resumen.activos} detalle={t(`${contenido.resumen.inactivos} inactivos`, `${contenido.resumen.inactivos} inactive`)} />
+            </>
+          ) : esEntrenador ? (
             <>
               <ResumenCard titulo={t('Deportistas', 'Athletes')} valor={contenido.resumen.deportistas} detalle={t('cuentas vinculadas', 'linked accounts')} />
               <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t(`${contenido.resumen.sesionesPendientes} pendientes`, `${contenido.resumen.sesionesPendientes} pending`)} />
@@ -310,7 +415,7 @@ function Tablero() {
 
             <div className="h-64">
               {contenido.serieSecundaria.length === 0 ? (
-                <EstadoVacio mensaje="Aún no hay metas suficientes para construir esta gráfica." />
+                <EstadoVacio mensaje="Aun no hay metas suficientes para construir esta grafica." />
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -350,18 +455,18 @@ function Tablero() {
                   moduloActivo === modulo.id
                     ? (esOscuro
                         ? 'border-cyan-400 bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(37,99,235,0.14))] shadow-[0_18px_40px_rgba(8,145,178,0.24)]'
-                        : 'border-cyan-500 bg-[linear-gradient(135deg,rgba(34,211,238,0.14),rgba(37,99,235,0.12))] shadow-[0_18px_40px_rgba(14,116,144,0.12)]')
+                        : 'border-cyan-500 bg-[linear-gradient(135deg,rgba(34,211,238,0.22),rgba(37,99,235,0.18))] shadow-[0_22px_44px_rgba(14,116,144,0.18)]')
                     : (esOscuro
                         ? 'border-white/8 bg-white/5 hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-white/7'
-                        : 'border-slate-200/90 bg-white/72 hover:-translate-y-1 hover:border-cyan-500/35 hover:bg-white')
+                        : 'border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(244,249,255,0.92))] shadow-[0_14px_28px_rgba(148,163,184,0.12)] hover:-translate-y-1 hover:border-cyan-500/45 hover:shadow-[0_18px_36px_rgba(14,116,144,0.16)]')
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-lg font-semibold">{modulo.titulo}</p>
                   <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.24em] ${
                     moduloActivo === modulo.id
-                      ? 'bg-cyan-400/18 text-cyan-200'
-                      : (esOscuro ? 'bg-white/8 text-slate-300' : 'bg-slate-100 text-slate-600')
+                      ? (esOscuro ? 'bg-cyan-400/18 text-cyan-200' : 'bg-[linear-gradient(135deg,#22d3ee,#60a5fa)] text-white shadow-[0_8px_18px_rgba(37,99,235,0.2)]')
+                      : (esOscuro ? 'bg-white/8 text-slate-300' : 'bg-slate-200/90 text-slate-700')
                   }`}>
                     {moduloActivo === modulo.id ? t('Activo', 'Active') : t('Abrir', 'Open')}
                   </span>
@@ -374,7 +479,14 @@ function Tablero() {
 
         <section className="mt-8">
           <Panel>
-            {esEntrenador ? (
+            {esAdministrador ? (
+              <ModuloAdministrador
+                datos={datos}
+                moduloActivo={moduloActivo}
+                guardarCambios={guardarCambios}
+                cambiarEstadoUsuario={cambiarEstadoUsuario}
+              />
+            ) : esEntrenador ? (
               <ModuloEntrenador
                 datos={datos}
                 moduloActivo={moduloActivo}
@@ -400,18 +512,119 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
   const [perfil, setPerfil] = useState(datos.perfil)
   const [editandoPerfil, setEditandoPerfil] = useState(false)
   const [nuevaEstadistica, setNuevaEstadistica] = useState({
-    fecha: '2026-05-08',
+    fecha: new Date().toISOString().slice(0, 10),
     disciplina: datos.perfil.disciplina || '',
-    metrica: 'Goles',
+    metrica: '',
     valor: 1,
     competencia: '',
   })
+  const [indiceEdicionEstadistica, setIndiceEdicionEstadistica] = useState(null)
+  const [busquedaEstadistica, setBusquedaEstadistica] = useState('')
+  const [filtroMetrica, setFiltroMetrica] = useState('')
+  const [filtroDisciplinaEstadistica, setFiltroDisciplinaEstadistica] = useState('')
   const [metasLocales, setMetasLocales] = useState(datos.metas)
   const { esOscuro, t } = useUI()
 
   const perfilRef = useRef(JSON.stringify(datos.perfil))
   const metasRef = useRef(JSON.stringify(datos.metas))
   const perfilTieneContenido = perfilDeportistaTieneContenido(datos.perfil)
+  // Acumula estadisticas por metrica para mostrar que areas pesan mas en el rendimiento.
+  const estadisticasPorMetrica = useMemo(() => {
+    const acumulado = new Map()
+
+    for (const item of datos.estadisticas) {
+      const nombre = String(item.metrica || t('Registro', 'Record')).trim() || t('Registro', 'Record')
+      acumulado.set(nombre, (acumulado.get(nombre) || 0) + (Number(item.valor) || 0))
+    }
+
+    return [...acumulado.entries()]
+      .map(([nombre, valor]) => ({ nombre, valor }))
+      .sort((a, b) => b.valor - a.valor)
+      .slice(0, 6)
+  }, [datos.estadisticas, t])
+
+  // Ordena los registros recientes para construir una grafica temporal simple.
+  const historialReciente = useMemo(() => (
+    [...datos.estadisticas]
+      .sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0))
+      .slice(-7)
+      .map((item) => ({
+        fecha: item.fecha
+          ? new Date(item.fecha).toLocaleDateString('es-CR', { month: 'short', day: 'numeric' })
+          : t('Sin fecha', 'No date'),
+        valor: Number(item.valor) || 0,
+      }))
+  ), [datos.estadisticas, t])
+
+  // Convierte cada meta en porcentaje para poder compararlas dentro del perfil.
+  const progresoMetasPerfil = useMemo(() => (
+    datos.metas.slice(0, 5).map((meta) => ({
+      nombre: meta.titulo,
+      valor: meta.objetivo > 0 ? Math.min(Math.round(((Number(meta.progreso) || 0) / meta.objetivo) * 100), 100) : 0,
+      detalle: `${meta.progreso}/${meta.objetivo}`,
+    }))
+  ), [datos.metas])
+
+  // Alimenta los filtros con valores reales ya registrados por el deportista.
+  const metricasDisponibles = useMemo(
+    () => [...new Set(datos.estadisticas.map((item) => limpiarTextoVisual(item.metrica)).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [datos.estadisticas],
+  )
+
+  const disciplinasDisponiblesEstadisticas = useMemo(
+    () => [...new Set(datos.estadisticas.map((item) => limpiarTextoVisual(item.disciplina)).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [datos.estadisticas],
+  )
+
+  // Permite filtrar el historial por texto, metrica y disciplina.
+  const estadisticasFiltradas = useMemo(() => (
+    datos.estadisticas.filter((item) => {
+      const metricaVisible = limpiarTextoVisual(item.metrica)
+      const disciplinaVisible = limpiarTextoVisual(item.disciplina)
+      const contextoVisible = limpiarTextoVisual(item.competencia)
+      const fechaVisible = limpiarTextoVisual(item.fecha)
+
+      const coincideMetrica = !filtroMetrica || metricaVisible === filtroMetrica
+      const coincideDisciplina = !filtroDisciplinaEstadistica || disciplinaVisible === filtroDisciplinaEstadistica
+      const coincideBusqueda =
+        !busquedaEstadistica.trim() ||
+        [metricaVisible, disciplinaVisible, contextoVisible, fechaVisible, item.valor]
+          .some((fragmento) => textoIncluye(fragmento, busquedaEstadistica))
+
+      return coincideMetrica && coincideDisciplina && coincideBusqueda
+    })
+  ), [busquedaEstadistica, datos.estadisticas, filtroDisciplinaEstadistica, filtroMetrica])
+
+  // Tarjetas resumen para que el perfil no sea solo un formulario sino tambien un panel analitico.
+  const metricasPerfil = useMemo(() => {
+    const totalRegistros = datos.estadisticas.length
+    const totalValor = datos.estadisticas.reduce((suma, item) => suma + (Number(item.valor) || 0), 0)
+    const metaMasAvanzada = progresoMetasPerfil.reduce((maximo, meta) => Math.max(maximo, meta.valor), 0)
+
+    return [
+      {
+        etiqueta: t('Registros cargados', 'Records logged'),
+        valor: totalRegistros,
+        detalle: t('estadisticas guardadas', 'saved statistics'),
+      },
+      {
+        etiqueta: t('Volumen acumulado', 'Accumulated volume'),
+        valor: totalValor,
+        detalle: t('suma de metricas', 'sum of metrics'),
+      },
+      {
+        etiqueta: t('Meta mas avanzada', 'Most advanced goal'),
+        valor: `${metaMasAvanzada}%`,
+        detalle: t('cumplimiento maximo', 'highest completion'),
+      },
+    ]
+  }, [datos.estadisticas, progresoMetasPerfil, t])
+
+  // Evita mostrar paneles grandes vacios cuando todavia no hay datos suficientes.
+  const mostrarBloquesAnaliticos =
+    estadisticasPorMetrica.length > 0 ||
+    historialReciente.length > 0 ||
+    progresoMetasPerfil.length > 0
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -438,6 +651,17 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
     setEditandoPerfil(false)
   }
 
+  const reiniciarFormularioEstadistica = () => {
+    setNuevaEstadistica({
+      fecha: new Date().toISOString().slice(0, 10),
+      disciplina: datos.perfil.disciplina || '',
+      metrica: '',
+      valor: 1,
+      competencia: '',
+    })
+    setIndiceEdicionEstadistica(null)
+  }
+
   // Convierte la imagen seleccionada a base64 para guardarla dentro del perfil del deportista.
   const cargarFotoPerfil = (archivo) => {
     if (!archivo) return
@@ -452,6 +676,9 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
 
   const agregarEstadistica = async (e) => {
     e.preventDefault()
+
+    if (!String(nuevaEstadistica.metrica || '').trim()) return
+
     await guardarCambios((actuales) => ({
       ...actuales,
       estadisticas: (() => {
@@ -459,6 +686,21 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
         const disciplinaNormalizada = String(nuevaEstadistica.disciplina || '').trim().toLowerCase()
         const contextoNormalizado = String(nuevaEstadistica.competencia || '').trim().toLowerCase()
         const valorNuevo = Number(nuevaEstadistica.valor) || 0
+
+        if (indiceEdicionEstadistica !== null) {
+          return actuales.estadisticas.map((item, indice) => (
+            indice === indiceEdicionEstadistica
+              ? {
+                  ...item,
+                  fecha: nuevaEstadistica.fecha || item.fecha,
+                  disciplina: nuevaEstadistica.disciplina.trim(),
+                  metrica: nuevaEstadistica.metrica.trim(),
+                  valor: valorNuevo,
+                  competencia: nuevaEstadistica.competencia.trim(),
+                }
+              : item
+          ))
+        }
 
         // Si la metrica ya existe para la misma disciplina y contexto, acumula el valor
         // en lugar de crear un registro duplicado.
@@ -472,6 +714,9 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
           return [
             {
               ...nuevaEstadistica,
+              disciplina: nuevaEstadistica.disciplina.trim(),
+              metrica: nuevaEstadistica.metrica.trim(),
+              competencia: nuevaEstadistica.competencia.trim(),
               valor: valorNuevo,
             },
             ...actuales.estadisticas,
@@ -483,24 +728,64 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
             ? {
                 ...item,
                 fecha: nuevaEstadistica.fecha || item.fecha,
-                valor: (Number(item.valor) || 0) + valorNuevo,
-              }
-            : item
+              valor: (Number(item.valor) || 0) + valorNuevo,
+            }
+          : item
         ))
       })(),
     }))
-    setNuevaEstadistica((previo) => ({ ...previo, valor: 1, competencia: '' }))
+    reiniciarFormularioEstadistica()
+  }
+
+  // Carga un registro existente en el formulario para poder corregirlo.
+  const editarEstadistica = (item, indiceOriginal) => {
+    setIndiceEdicionEstadistica(indiceOriginal)
+    setNuevaEstadistica({
+      fecha: item.fecha || new Date().toISOString().slice(0, 10),
+      disciplina: limpiarTextoVisual(item.disciplina),
+      metrica: limpiarTextoVisual(item.metrica),
+      valor: Number(item.valor) || 0,
+      competencia: limpiarTextoVisual(item.competencia),
+    })
+  }
+
+  // Elimina una estadistica puntual del historial del deportista.
+  const eliminarEstadistica = async (indiceOriginal) => {
+    await guardarCambios((actuales) => ({
+      ...actuales,
+      estadisticas: actuales.estadisticas.filter((_, indice) => indice !== indiceOriginal),
+    }))
+
+    if (indiceEdicionEstadistica === indiceOriginal) {
+      reiniciarFormularioEstadistica()
+    }
   }
 
   if (moduloActivo === 'perfil') {
     return (
-      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid items-start gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-6">
-          <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Perfil activo', 'Active profile')}</p>
-          <h3 className="mt-2 text-2xl font-semibold">Información deportiva</h3>
-          <p className="mt-3 max-w-xl text-sm text-slate-300">
+          <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Perfil activo', 'Active profile')}</p>
+          <h3 className="mt-2 text-2xl font-semibold">{t('Informacion deportiva', 'Sports profile information')}</h3>
+          <p className={`mt-3 max-w-xl text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-500'}`}>
             {t('Este perfil lo ve usted en su cuenta y ayuda a que los entrenadores lo identifiquen mejor cuando lo vinculan.', 'This profile is visible in your account and helps coaches identify you better when they link you.')}
           </p>
+          <div className="grid gap-3 md:grid-cols-3">
+            {metricasPerfil.map((item) => (
+              <div
+                key={item.etiqueta}
+                className={`rounded-2xl border p-4 ${
+                  esOscuro
+                    ? 'border-white/8 bg-white/5'
+                    : 'border-cyan-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(240,249,255,0.96))] shadow-[0_12px_24px_rgba(14,116,144,0.1)]'
+                }`}
+              >
+                <p className={`text-[11px] uppercase tracking-[0.24em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{item.etiqueta}</p>
+                <p className={`mt-3 text-3xl font-semibold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{item.valor}</p>
+                <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{item.detalle}</p>
+              </div>
+            ))}
+          </div>
           <div className="grid gap-3 md:grid-cols-2">
             <ResumenAsignadoSimple
               titulo={t('Metas asignadas', 'Assigned goals')}
@@ -527,38 +812,119 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
               render={(observacion) => `${observacion.prioridad} - ${observacion.nota}`}
             />
           </div>
+          {mostrarBloquesAnaliticos && (
+            <>
+              <div className="grid gap-4 xl:grid-cols-2">
+                {estadisticasPorMetrica.length > 0 && (
+                  <div className={`rounded-2xl border p-4 ${
+                    esOscuro
+                      ? 'border-white/8 bg-white/5'
+                      : 'border-cyan-200/80 bg-white shadow-[0_14px_28px_rgba(14,116,144,0.1)]'
+                  }`}>
+                    <p className={`text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Analítica personal', 'Personal analytics')}</p>
+                    <h4 className="mt-2 text-lg font-semibold">{t('Métricas más registradas', 'Most logged metrics')}</h4>
+                    <div className="mt-4 h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={estadisticasPorMetrica}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={esOscuro ? '#334155' : '#cbd5e1'} />
+                          <XAxis dataKey="nombre" stroke={esOscuro ? '#cbd5e1' : '#475569'} />
+                          <YAxis stroke={esOscuro ? '#cbd5e1' : '#475569'} allowDecimals={false} />
+                          <Tooltip />
+                          <Bar dataKey="valor" radius={[10, 10, 0, 0]} fill="#22d3ee" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+                {historialReciente.length > 0 && (
+                  <div className={`rounded-2xl border p-4 ${
+                    esOscuro
+                      ? 'border-white/8 bg-white/5'
+                      : 'border-amber-200/80 bg-white shadow-[0_14px_28px_rgba(245,158,11,0.1)]'
+                  }`}>
+                    <p className={`text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-amber-300' : 'text-amber-600'}`}>{t('Evolución reciente', 'Recent evolution')}</p>
+                    <h4 className="mt-2 text-lg font-semibold">{t('Últimos registros cargados', 'Latest logged records')}</h4>
+                    <div className="mt-4 h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={historialReciente}>
+                          <defs>
+                            <linearGradient id="vyroxAreaProgreso" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8} />
+                              <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.08} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke={esOscuro ? '#334155' : '#cbd5e1'} />
+                          <XAxis dataKey="fecha" stroke={esOscuro ? '#cbd5e1' : '#475569'} />
+                          <YAxis stroke={esOscuro ? '#cbd5e1' : '#475569'} allowDecimals={false} />
+                          <Tooltip />
+                          <Area type="monotone" dataKey="valor" stroke="#38bdf8" fill="url(#vyroxAreaProgreso)" strokeWidth={3} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {progresoMetasPerfil.length > 0 && (
+                <div className={`rounded-2xl border p-4 ${
+                  esOscuro
+                    ? 'border-white/8 bg-white/5'
+                    : 'border-cyan-200/80 bg-white shadow-[0_14px_28px_rgba(14,116,144,0.1)]'
+                }`}>
+                  <p className={`text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Cumplimiento de metas', 'Goal completion')}</p>
+                  <h4 className="mt-2 text-lg font-semibold">{t('Porcentaje por meta asignada', 'Percentage by assigned goal')}</h4>
+                  <div className="mt-4 h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={progresoMetasPerfil}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={esOscuro ? '#334155' : '#cbd5e1'} />
+                        <XAxis dataKey="nombre" stroke={esOscuro ? '#cbd5e1' : '#475569'} />
+                        <YAxis stroke={esOscuro ? '#cbd5e1' : '#475569'} domain={[0, 100]} allowDecimals={false} />
+                        <Tooltip formatter={(valor, _, item) => `${valor}% (${item?.payload?.detalle || ''})`} />
+                        <Line type="monotone" dataKey="valor" stroke="#f59e0b" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {editandoPerfil || !perfilTieneContenido ? (
-          <form onSubmit={guardarPerfil} className="grid gap-4 md:grid-cols-2">
+          <form onSubmit={guardarPerfil} className="grid content-start self-start gap-4 md:grid-cols-2">
             <Campo label={t('Disciplina', 'Discipline')} value={perfil.disciplina} onChange={(value) => setPerfil({ ...perfil, disciplina: value })} />
-            <Campo label="Categoria" value={perfil.categoria} onChange={(value) => setPerfil({ ...perfil, categoria: value })} />
-            <Campo label="Equipo" value={perfil.equipo} onChange={(value) => setPerfil({ ...perfil, equipo: value })} />
+            <Campo label={t('Categoría', 'Category')} value={perfil.categoria} onChange={(value) => setPerfil({ ...perfil, categoria: value })} />
+            <Campo label={t('Equipo', 'Team')} value={perfil.equipo} onChange={(value) => setPerfil({ ...perfil, equipo: value })} />
+            <Campo label={t('Objetivo principal', 'Main goal')} value={perfil.objetivoPrincipal} onChange={(value) => setPerfil({ ...perfil, objetivoPrincipal: value })} />
             <div className="md:col-span-2">
               <Etiqueta>{t('Foto de perfil', 'Profile picture')}</Etiqueta>
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => cargarFotoPerfil(e.target.files?.[0])}
-                className="mt-2 block w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-200"
+                className={`mt-2 block w-full rounded-2xl border px-4 py-3 text-sm transition ${
+                  esOscuro
+                    ? 'border-white/10 bg-slate-950/70 text-slate-200 file:text-slate-100'
+                    : 'border-slate-300 bg-white text-slate-700 shadow-[0_10px_24px_rgba(148,163,184,0.12)] file:text-slate-700'
+                }`}
               />
-              <p className="mt-2 text-xs text-slate-400">
+              <p className={`mt-2 text-xs ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>
                 {t('Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.', 'You can upload JPG, JPEG, PNG, WEBP, GIF, SVG and other compatible image formats.')}
               </p>
-            </div>
-            <div className="md:col-span-2">
-              <Campo label={t('Objetivo principal', 'Main goal')} value={perfil.objetivoPrincipal} onChange={(value) => setPerfil({ ...perfil, objetivoPrincipal: value })} />
             </div>
             <div className="md:col-span-2">
               <Etiqueta>{t('Resumen personal', 'Personal summary')}</Etiqueta>
               <textarea
                 value={perfil.bio}
                 onChange={(e) => setPerfil({ ...perfil, bio: e.target.value })}
-                className="mt-2 min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+                className={`mt-2 min-h-28 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                  esOscuro
+                    ? 'border-white/10 bg-slate-950/70 text-white'
+                    : 'border-slate-300 bg-white text-slate-900 shadow-[0_12px_28px_rgba(148,163,184,0.12)]'
+                }`}
               />
             </div>
             <div className="md:col-span-2 flex flex-wrap gap-3">
-              <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
+              <button className="w-full rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#2563eb)] px-5 py-3 font-semibold text-white shadow-[0_16px_34px_rgba(37,99,235,0.28)] transition hover:-translate-y-0.5 hover:brightness-110">
                 {t('Guardar perfil', 'Save profile')}
               </button>
               {perfilTieneContenido && (
@@ -568,7 +934,11 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
                     setPerfil(datos.perfil)
                     setEditandoPerfil(false)
                   }}
-                  className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
+                  className={`rounded-2xl border px-4 py-3 font-semibold transition ${
+                    esOscuro
+                      ? 'border-white/15 text-slate-200 hover:bg-white/5'
+                      : 'border-slate-300 bg-white text-slate-700 shadow-[0_10px_24px_rgba(148,163,184,0.1)] hover:bg-slate-50'
+                  }`}
                 >
                   {t('Cancelar edicion', 'Cancel editing')}
                 </button>
@@ -583,7 +953,7 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
             foto={datos.perfil.foto}
             campos={[
               { label: t('Disciplina', 'Discipline'), value: datos.perfil.disciplina },
-              { label: t('Categoria', 'Category'), value: datos.perfil.categoria },
+              { label: t('Categoría', 'Category'), value: datos.perfil.categoria },
               { label: t('Equipo', 'Team'), value: datos.perfil.equipo },
               { label: t('Objetivo principal', 'Main goal'), value: datos.perfil.objetivoPrincipal },
             ]}
@@ -597,19 +967,19 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
             titulo={t('Metas asignadas', 'Assigned goals')}
             vacio={t('Aun no tienes metas asignadas.', 'You do not have any assigned goals yet.')}
             items={datos.metas}
-            render={(meta) => `${meta.titulo} · ${meta.progreso}/${meta.objetivo}`}
+            render={(meta) => `${limpiarTextoVisual(meta.titulo)} · ${meta.progreso}/${meta.objetivo}`}
           />
           <ResumenAsignadoSimple
             titulo={t('Sesiones asignadas', 'Assigned sessions')}
             vacio={t('Aun no tienes sesiones asignadas.', 'You do not have any assigned sessions yet.')}
             items={datos.sesiones}
-            render={(sesion) => `${sesion.tipo} · ${sesion.fecha}`}
+            render={(sesion) => `${limpiarTextoVisual(sesion.tipo)} · ${limpiarTextoVisual(sesion.fecha)}`}
           />
           <ResumenAsignadoSimple
             titulo={t('Competencias asignadas', 'Assigned competitions')}
             vacio={t('Aun no tienes competencias asignadas.', 'You do not have any assigned competitions yet.')}
             items={datos.competencias}
-            render={(competencia) => `${competencia.nombre} · ${competencia.fecha}`}
+            render={(competencia) => `${limpiarTextoVisual(competencia.nombre)} · ${limpiarTextoVisual(competencia.fecha)}`}
           />
           <ResumenAsignadoSimple
             titulo={t('Seguimiento', 'Tracking')}
@@ -622,46 +992,227 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
     )
   }
 
-  if (moduloActivo === 'estadisticas' || moduloActivo === 'estadísticas') {
+  if (moduloActivo === 'estadisticas' || moduloActivo === 'estadisticas') {
     return (
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-        <form onSubmit={agregarEstadistica} className="space-y-4">
+        <form onSubmit={agregarEstadistica} className={`space-y-4 rounded-[28px] border p-5 ${
+          esOscuro
+            ? 'border-white/8 bg-white/5'
+            : 'border-cyan-200 bg-white shadow-[0_18px_34px_rgba(14,116,144,0.12)]'
+        }`}>
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Nuevo registro', 'New entry')}</p>
-            <h3 className="mt-2 text-2xl font-semibold">{t('Agregar estadistica', 'Add statistic')}</h3>
+            <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-800'}`}>
+              {indiceEdicionEstadistica !== null ? t('Edición de registro', 'Editing entry') : t('Nuevo registro', 'New entry')}
+            </p>
+            <h3 className="mt-2 text-2xl font-semibold">
+              {indiceEdicionEstadistica !== null ? t('Editar estadística', 'Edit statistic') : t('Agregar estadística', 'Add statistic')}
+            </h3>
+            <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>
+              {t('Si la métrica ya existe para la misma disciplina y contexto, el sistema sumará el nuevo valor automáticamente.', 'If the metric already exists for the same discipline and context, the system will automatically add the new value.')}
+            </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <Campo label={t('Fecha', 'Date')} type="date" value={nuevaEstadistica.fecha} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, fecha: value })} />
             <Campo label={t('Valor', 'Value')} type="number" value={nuevaEstadistica.valor} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, valor: value })} />
             <Campo label={t('Disciplina', 'Discipline')} value={nuevaEstadistica.disciplina} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, disciplina: value })} />
-            <Campo label={t('Metrica', 'Metric')} value={nuevaEstadistica.metrica} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, metrica: value })} />
+            <Campo label={t('Métrica', 'Metric')} value={nuevaEstadistica.metrica} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, metrica: value })} />
             <div className="md:col-span-2">
               <Campo label={t('Competencia o contexto', 'Competition or context')} value={nuevaEstadistica.competencia} onChange={(value) => setNuevaEstadistica({ ...nuevaEstadistica, competencia: value })} />
             </div>
           </div>
-          <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-            {t('Guardar estadistica', 'Save statistic')}
-          </button>
+          <div className="flex flex-wrap gap-3">
+            <button className="rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#2563eb)] px-4 py-3 font-semibold text-white shadow-[0_16px_34px_rgba(37,99,235,0.24)] transition hover:-translate-y-0.5 hover:brightness-110">
+              {indiceEdicionEstadistica !== null ? t('Guardar cambios', 'Save changes') : t('Guardar estadística', 'Save statistic')}
+            </button>
+            {indiceEdicionEstadistica !== null && (
+              <button
+                type="button"
+                onClick={reiniciarFormularioEstadistica}
+                className={`rounded-2xl border px-4 py-3 font-semibold transition ${
+                  esOscuro
+                    ? 'border-white/15 text-slate-200 hover:bg-white/5'
+                    : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                {t('Cancelar edición', 'Cancel editing')}
+              </button>
+            )}
+          </div>
         </form>
 
         <div className="space-y-4">
+          <div className={`grid gap-4 rounded-[28px] border p-5 md:grid-cols-4 ${
+            esOscuro
+              ? 'border-white/8 bg-white/5'
+              : 'border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(240,249,255,0.92))] shadow-[0_18px_34px_rgba(14,116,144,0.1)]'
+          }`}>
+            <div className="md:col-span-2">
+              <Etiqueta>{t('Buscar registro', 'Search record')}</Etiqueta>
+              <input
+                value={busquedaEstadistica}
+                onChange={(e) => setBusquedaEstadistica(e.target.value)}
+                placeholder={t('Busque por métrica, disciplina, fecha o contexto.', 'Search by metric, discipline, date or context.')}
+                className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                  esOscuro
+                    ? 'border-white/10 bg-slate-950/70 text-white'
+                    : 'border-cyan-300 bg-white text-slate-900 shadow-[0_12px_24px_rgba(14,116,144,0.12)]'
+                }`}
+              />
+            </div>
+            <div>
+              <Etiqueta>{t('Filtrar por métrica', 'Filter by metric')}</Etiqueta>
+              <select
+                value={filtroMetrica}
+                onChange={(e) => setFiltroMetrica(e.target.value)}
+                className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                  esOscuro
+                    ? 'border-white/10 bg-slate-950/70 text-white'
+                    : 'border-cyan-300 bg-white text-slate-900 shadow-[0_12px_24px_rgba(14,116,144,0.12)]'
+                }`}
+              >
+                <option value="">{t('Todas', 'All')}</option>
+                {metricasDisponibles.map((metrica) => (
+                  <option key={metrica} value={metrica}>{metrica}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Etiqueta>{t('Filtrar por disciplina', 'Filter by discipline')}</Etiqueta>
+              <select
+                value={filtroDisciplinaEstadistica}
+                onChange={(e) => setFiltroDisciplinaEstadistica(e.target.value)}
+                className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                  esOscuro
+                    ? 'border-white/10 bg-slate-950/70 text-white'
+                    : 'border-cyan-300 bg-white text-slate-900 shadow-[0_12px_24px_rgba(14,116,144,0.12)]'
+                }`}
+              >
+                <option value="">{t('Todas', 'All')}</option>
+                {disciplinasDisponiblesEstadisticas.map((disciplina) => (
+                  <option key={disciplina} value={disciplina}>{disciplina}</option>
+                ))}
+              </select>
+            </div>
+            <div className="md:col-span-3 flex items-end">
+              <div className={`w-full rounded-2xl border px-4 py-3 text-sm ${
+                esOscuro
+                  ? 'border-cyan-400/25 bg-cyan-400/10 text-cyan-100'
+                  : 'border-cyan-200 bg-cyan-50 text-cyan-900'
+              }`}>
+                {t('Resultados visibles', 'Visible results')}: <span className="font-semibold">{estadisticasFiltradas.length}</span>
+              </div>
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setBusquedaEstadistica('')
+                  setFiltroMetrica('')
+                  setFiltroDisciplinaEstadistica('')
+                }}
+                className={`w-full rounded-2xl border px-4 py-3 font-semibold transition ${
+                  esOscuro
+                    ? 'border-white/15 text-slate-200 hover:bg-white/5'
+                    : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                {t('Limpiar filtros', 'Clear filters')}
+              </button>
+            </div>
+          </div>
           {datos.estadisticas.length === 0 ? (
-            <EstadoVacio mensaje={t('Todavia no has registrado estadisticas personales.', 'You have not recorded personal statistics yet.')} />
+            <EstadoVacio mensaje={t('Todavía no has registrado estadísticas personales.', 'You have not recorded personal statistics yet.')} />
+          ) : estadisticasFiltradas.length === 0 ? (
+            <EstadoVacio mensaje={t('No hay estadísticas que coincidan con los filtros seleccionados.', 'There are no statistics that match the selected filters.')} />
           ) : (
-            datos.estadisticas.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h4 className="font-semibold">{item.metrica}</h4>
-                    <p className="text-sm text-slate-300">{item.disciplina} · {item.competencia}</p>
+            estadisticasFiltradas.map((item) => {
+              const indiceOriginal = datos.estadisticas.indexOf(item)
+              const metricaVisible = limpiarTextoVisual(item.metrica) || t('Métrica sin nombre', 'Unnamed metric')
+              const disciplinaVisible = limpiarTextoVisual(item.disciplina)
+              const contextoVisible = limpiarTextoVisual(item.competencia)
+              const fechaVisible = limpiarTextoVisual(item.fecha)
+              const resumenContexto = [disciplinaVisible, contextoVisible].filter(Boolean)
+
+              return (
+                <div
+                  key={item.id || `${item.metrica}-${item.disciplina}-${item.competencia}-${item.fecha}-${indiceOriginal}`}
+                  className={`rounded-[26px] border p-5 ${
+                    esOscuro
+                      ? 'border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(15,23,42,0.64))] shadow-[0_18px_30px_rgba(2,6,23,0.2)]'
+                      : 'border-cyan-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(240,249,255,0.94))] shadow-[0_18px_34px_rgba(14,116,144,0.12)]'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className={`text-xl font-bold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{metricaVisible}</h4>
+                        <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>
+                          {resumenContexto.join(' · ') || t('Sin contexto adicional', 'No extra context')}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {disciplinaVisible && (
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            esOscuro
+                              ? 'bg-cyan-400/12 text-cyan-200'
+                              : 'bg-cyan-100 text-cyan-900'
+                          }`}>
+                            {disciplinaVisible}
+                          </span>
+                        )}
+                        {contextoVisible && (
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            esOscuro
+                              ? 'bg-amber-400/12 text-amber-200'
+                              : 'bg-amber-100 text-amber-900'
+                          }`}>
+                            {contextoVisible}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`inline-flex min-w-[5rem] justify-center rounded-2xl px-4 py-3 text-2xl font-black ${
+                        esOscuro
+                          ? 'bg-cyan-400/10 text-cyan-300'
+                          : 'bg-cyan-100 text-cyan-800'
+                      }`}>
+                        {item.valor}
+                      </div>
+                      <p className={`mt-3 text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {fechaVisible || t('Sin fecha', 'No date')}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-semibold text-cyan-300">{item.valor}</p>
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.fecha}</p>
+                  <div className={`mt-4 flex flex-wrap gap-3 border-t pt-4 ${
+                    esOscuro ? 'border-white/8' : 'border-slate-200'
+                  }`}>
+                    <button
+                      type="button"
+                      onClick={() => editarEstadistica(item, indiceOriginal)}
+                      className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
+                        esOscuro
+                          ? 'border border-cyan-400/30 bg-cyan-400/12 text-cyan-100 hover:bg-cyan-400/22'
+                          : 'border border-cyan-300 bg-cyan-600 text-white shadow-[0_10px_22px_rgba(8,145,178,0.24)] hover:brightness-110'
+                      }`}
+                    >
+                      {t('Editar', 'Edit')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => eliminarEstadistica(indiceOriginal)}
+                      className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
+                        esOscuro
+                          ? 'border border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22'
+                          : 'border border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110'
+                      }`}
+                    >
+                      {t('Eliminar', 'Delete')}
+                    </button>
                   </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </div>
@@ -825,6 +1376,306 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
   )
 }
 
+function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstadoUsuario }) {
+  const [perfil, setPerfil] = useState(datos.perfil)
+  const [editandoPerfil, setEditandoPerfil] = useState(false)
+  const [busquedaUsuarios, setBusquedaUsuarios] = useState('')
+  const [filtroRolAdmin, setFiltroRolAdmin] = useState('')
+  const [filtroEstadoAdmin, setFiltroEstadoAdmin] = useState('')
+  const { esOscuro, t } = useUI()
+
+  const perfilRef = useRef(JSON.stringify(datos.perfil))
+
+  useEffect(() => {
+    const perfilStr = JSON.stringify(datos.perfil)
+    if (perfilRef.current !== perfilStr) {
+      perfilRef.current = perfilStr
+      setPerfil(datos.perfil)
+    }
+  }, [datos.perfil])
+
+  const usuariosFiltrados = useMemo(() => (
+    (datos.usuarios || []).filter((item) => {
+      const coincideRol = !filtroRolAdmin || item.rol === filtroRolAdmin
+      const coincideEstado = !filtroEstadoAdmin || item.estado === filtroEstadoAdmin
+      const coincideBusqueda =
+        !busquedaUsuarios.trim() ||
+        [item.nombreCompleto, item.correo, item.rol, item.estado, item.perfil?.disciplina, item.perfil?.especialidad]
+          .some((fragmento) => textoIncluye(fragmento, busquedaUsuarios))
+
+      return coincideRol && coincideEstado && coincideBusqueda
+    })
+  ), [busquedaUsuarios, datos.usuarios, filtroEstadoAdmin, filtroRolAdmin])
+
+  // Reutiliza el guardado base64 para que el admin tambien pueda identificarse visualmente.
+  const cargarFotoPerfil = (archivo) => {
+    if (!archivo || !archivo.type?.startsWith('image/')) return
+    const lector = new FileReader()
+    lector.onload = () => {
+      setPerfil((previo) => ({ ...previo, foto: lector.result }))
+    }
+    lector.readAsDataURL(archivo)
+  }
+
+  if (moduloActivo === 'perfil') {
+    return (
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="space-y-6">
+          <div>
+            <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Perfil institucional', 'Institutional profile')}</p>
+            <h3 className="mt-2 text-2xl font-semibold">{t('Administración general', 'General administration')}</h3>
+            <p className={`mt-3 max-w-xl text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
+              {t('Este perfil identifica a la persona responsable de supervisar usuarios, actividad y comportamiento global de la plataforma.', 'This profile identifies the person responsible for supervising users, activity, and the overall behavior of the platform.')}
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <ResumenAsignadoSimple
+              titulo={t('Usuarios activos', 'Active users')}
+              vacio={t('Aún no hay usuarios activos para mostrar.', 'There are no active users to show yet.')}
+              items={(datos.usuarios || []).filter((item) => item.estado === 'activo').slice(0, 4)}
+              render={(item) => `${item.nombreCompleto} · ${item.rol}`}
+            />
+            <ResumenAsignadoSimple
+              titulo={t('Actividad reciente', 'Recent activity')}
+              vacio={t('Aún no hay actividad suficiente para mostrar.', 'There is not enough activity to show yet.')}
+              items={(datos.actividadAdmin || []).slice(0, 4)}
+              render={(item) => `${item.nombreCompleto} · ${item.resumen?.estadisticas || 0} stats`}
+            />
+          </div>
+        </div>
+
+        {editandoPerfil ? (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              await guardarCambios((actuales) => ({ ...actuales, perfil }))
+              setEditandoPerfil(false)
+            }}
+            className="grid gap-4 md:grid-cols-2"
+          >
+            <Campo label={t('Cargo', 'Role title')} value={perfil.cargo} onChange={(value) => setPerfil({ ...perfil, cargo: value })} />
+            <Campo label={t('Área', 'Area')} value={perfil.area} onChange={(value) => setPerfil({ ...perfil, area: value })} />
+            <div className="md:col-span-2">
+              <Etiqueta>{t('Foto de perfil', 'Profile picture')}</Etiqueta>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => cargarFotoPerfil(e.target.files?.[0])}
+                className={`mt-2 block w-full rounded-2xl border px-4 py-3 text-sm transition ${
+                  esOscuro
+                    ? 'border-white/10 bg-slate-950/70 text-slate-200 file:text-slate-100'
+                    : 'border-cyan-300 bg-white text-slate-800 shadow-[0_12px_28px_rgba(14,116,144,0.16)] file:rounded-xl file:border-0 file:bg-cyan-600 file:px-4 file:py-2 file:font-medium file:text-white'
+                }`}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Etiqueta>{t('Resumen ejecutivo', 'Executive summary')}</Etiqueta>
+              <textarea
+                value={perfil.bio}
+                onChange={(e) => setPerfil({ ...perfil, bio: e.target.value })}
+                className={`mt-2 min-h-28 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                  esOscuro
+                    ? 'border-white/10 bg-slate-950/70 text-white'
+                    : 'border-cyan-300 bg-white text-slate-900 shadow-[0_12px_28px_rgba(14,116,144,0.14)]'
+                }`}
+              />
+            </div>
+            <div className="md:col-span-2 flex flex-wrap gap-3">
+              <button className="rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#2563eb)] px-5 py-3 font-semibold text-white shadow-[0_16px_34px_rgba(37,99,235,0.28)] transition hover:-translate-y-0.5 hover:brightness-110">
+                {t('Guardar perfil', 'Save profile')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPerfil(datos.perfil)
+                  setEditandoPerfil(false)
+                }}
+                className={`rounded-2xl border px-4 py-3 font-semibold transition ${
+                  esOscuro
+                    ? 'border-white/15 text-slate-200 hover:bg-white/5'
+                    : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                {t('Cancelar', 'Cancel')}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <TarjetaPerfilGuardado
+            etiqueta={t('Perfil guardado', 'Saved profile')}
+            titulo={datos.perfil.cargo || t('Administrador de plataforma', 'Platform administrator')}
+            descripcion={datos.perfil.bio || t('Sin resumen ejecutivo registrado.', 'No executive summary saved yet.')}
+            foto={datos.perfil.foto}
+            campos={[
+              { label: t('Cargo', 'Role title'), value: datos.perfil.cargo },
+              { label: t('Área', 'Area'), value: datos.perfil.area },
+            ]}
+            accionTexto={t('Editar perfil', 'Edit profile')}
+            onAccion={() => setEditandoPerfil(true)}
+          />
+        )}
+      </div>
+    )
+  }
+
+  if (moduloActivo === 'usuarios') {
+    return (
+      <div className="space-y-6">
+        <div className={`grid gap-4 rounded-[28px] border p-5 md:grid-cols-4 ${
+          esOscuro
+            ? 'border-white/8 bg-white/5'
+            : 'border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(240,249,255,0.92))] shadow-[0_18px_34px_rgba(14,116,144,0.1)]'
+        }`}>
+          <div className="md:col-span-2">
+            <Etiqueta>{t('Buscar usuario', 'Search user')}</Etiqueta>
+            <input
+              value={busquedaUsuarios}
+              onChange={(e) => setBusquedaUsuarios(e.target.value)}
+              placeholder={t('Busque por nombre, correo, rol o especialidad.', 'Search by name, email, role, or specialty.')}
+              className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                esOscuro
+                  ? 'border-white/10 bg-slate-950/70 text-white'
+                  : 'border-cyan-300 bg-white text-slate-900 shadow-[0_12px_24px_rgba(14,116,144,0.12)]'
+              }`}
+            />
+          </div>
+          <div>
+            <Etiqueta>{t('Filtrar por rol', 'Filter by role')}</Etiqueta>
+            <select
+              value={filtroRolAdmin}
+              onChange={(e) => setFiltroRolAdmin(e.target.value)}
+              className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                esOscuro ? 'border-white/10 bg-slate-950/70 text-white' : 'border-cyan-300 bg-white text-slate-900'
+              }`}
+            >
+              <option value="">{t('Todos', 'All')}</option>
+              <option value="deportista">{t('Deportista', 'Athlete')}</option>
+              <option value="entrenador">{t('Entrenador', 'Coach')}</option>
+              <option value="administrador">{t('Administrador', 'Administrator')}</option>
+            </select>
+          </div>
+          <div>
+            <Etiqueta>{t('Filtrar por estado', 'Filter by status')}</Etiqueta>
+            <select
+              value={filtroEstadoAdmin}
+              onChange={(e) => setFiltroEstadoAdmin(e.target.value)}
+              className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                esOscuro ? 'border-white/10 bg-slate-950/70 text-white' : 'border-cyan-300 bg-white text-slate-900'
+              }`}
+            >
+              <option value="">{t('Todos', 'All')}</option>
+              <option value="activo">{t('Activo', 'Active')}</option>
+              <option value="inactivo">{t('Inactivo', 'Inactive')}</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid gap-4">
+          {usuariosFiltrados.length === 0 ? (
+            <EstadoVacio mensaje={t('No hay usuarios que coincidan con los filtros seleccionados.', 'There are no users that match the selected filters.')} />
+          ) : (
+            usuariosFiltrados.map((item) => (
+              <div
+                key={item.id}
+                className={`rounded-[26px] border p-5 ${
+                  esOscuro
+                    ? 'border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(15,23,42,0.64))]'
+                    : 'border-cyan-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(240,249,255,0.94))] shadow-[0_18px_34px_rgba(14,116,144,0.12)]'
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h4 className="text-lg font-bold">{item.nombreCompleto}</h4>
+                    <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{item.correo}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'bg-cyan-100 text-cyan-900'}`}>
+                        {item.rol}
+                      </span>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        item.estado === 'activo'
+                          ? (esOscuro ? 'bg-emerald-400/12 text-emerald-200' : 'bg-emerald-100 text-emerald-900')
+                          : (esOscuro ? 'bg-amber-400/12 text-amber-200' : 'bg-amber-100 text-amber-900')
+                      }`}>
+                        {item.estado}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>{t('Registrado', 'Registered')}</p>
+                    <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-200' : 'text-slate-700'}`}>
+                      {item.fechaRegistro ? new Date(item.fechaRegistro).toLocaleDateString('es-CR') : t('Sin fecha', 'No date')}
+                    </p>
+                  </div>
+                </div>
+                <div className={`mt-4 grid gap-3 border-t pt-4 md:grid-cols-4 ${esOscuro ? 'border-white/8' : 'border-slate-200'}`}>
+                  <MiniDatoAdmin titulo={t('Estadísticas', 'Statistics')} valor={item.resumen?.estadisticas || 0} />
+                  <MiniDatoAdmin titulo={t('Metas', 'Goals')} valor={item.resumen?.metas || 0} />
+                  <MiniDatoAdmin titulo={t('Sesiones', 'Sessions')} valor={item.resumen?.sesiones || 0} />
+                  <MiniDatoAdmin titulo={t('Competencias', 'Competitions')} valor={item.resumen?.competencias || 0} />
+                </div>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={async () => cambiarEstadoUsuario(item.id, item.estado === 'activo' ? 'inactivo' : 'activo')}
+                    className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
+                      item.estado === 'activo'
+                        ? (esOscuro
+                            ? 'border border-amber-400/30 bg-amber-400/12 text-amber-100 hover:bg-amber-400/22'
+                            : 'border border-amber-300 bg-amber-500 text-white hover:brightness-110')
+                        : (esOscuro
+                            ? 'border border-emerald-400/30 bg-emerald-400/12 text-emerald-100 hover:bg-emerald-400/22'
+                            : 'border border-emerald-300 bg-emerald-600 text-white hover:brightness-110')
+                    }`}
+                  >
+                    {item.estado === 'activo' ? t('Desactivar usuario', 'Deactivate user') : t('Activar usuario', 'Activate user')}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <div className={`rounded-[28px] border p-5 ${esOscuro ? 'border-white/8 bg-white/5' : 'border-cyan-200 bg-white shadow-[0_18px_34px_rgba(14,116,144,0.12)]'}`}>
+        <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-800'}`}>{t('Actividad destacada', 'Highlighted activity')}</p>
+        <div className="mt-4 space-y-3">
+          {(datos.actividadAdmin || []).length === 0 ? (
+            <EstadoVacio mensaje={t('Aún no hay actividad suficiente para construir esta vista.', 'There is not enough activity to build this view yet.')} />
+          ) : (
+            (datos.actividadAdmin || []).map((item) => (
+              <div key={item.id} className={`rounded-2xl border px-4 py-3 ${esOscuro ? 'border-white/8 bg-slate-950/45' : 'border-slate-200 bg-slate-50'}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{item.nombreCompleto}</p>
+                    <p className={`text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{item.correo}</p>
+                  </div>
+                  <div className={`rounded-full px-3 py-1 text-xs font-semibold ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'bg-cyan-100 text-cyan-900'}`}>
+                    {item.rol}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className={`rounded-[28px] border p-5 ${esOscuro ? 'border-white/8 bg-white/5' : 'border-cyan-200 bg-white shadow-[0_18px_34px_rgba(14,116,144,0.12)]'}`}>
+        <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-amber-300' : 'text-amber-700'}`}>{t('Volumen general', 'General volume')}</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <MiniDatoAdmin titulo={t('Estadísticas globales', 'Global statistics')} valor={datos.resumenAdmin?.estadisticas || 0} amplio />
+          <MiniDatoAdmin titulo={t('Metas globales', 'Global goals')} valor={datos.resumenAdmin?.metas || 0} amplio />
+          <MiniDatoAdmin titulo={t('Sesiones globales', 'Global sessions')} valor={datos.resumenAdmin?.sesiones || 0} amplio />
+          <MiniDatoAdmin titulo={t('Competencias globales', 'Global competitions')} valor={datos.resumenAdmin?.competencias || 0} amplio />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeportista }) {
   const [perfil, setPerfil] = useState(datos.perfil)
   const [editandoPerfil, setEditandoPerfil] = useState(false)
@@ -835,6 +1686,8 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
   const [edicionObservacionId, setEdicionObservacionId] = useState('')
   const [filtroDeportistaId, setFiltroDeportistaId] = useState('')
   const [filtroDisciplina, setFiltroDisciplina] = useState('')
+  const [busquedaLista, setBusquedaLista] = useState('')
+  const [busquedaSelector, setBusquedaSelector] = useState('')
   const [nuevaSesion, setNuevaSesion] = useState({
     fecha: '2026-05-10',
     tipo: '',
@@ -874,6 +1727,8 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
     () => [...new Set((datos.deportistas || []).map((item) => item.disciplina).filter(Boolean))],
     [datos.deportistas]
   )
+  const busquedaListaNormalizada = normalizarTexto(busquedaLista)
+  const busquedaSelectorNormalizada = normalizarTexto(busquedaSelector)
 
   const toggleAsignado = (ids, setter, deportistaId) => {
     setter((previo) => ({
@@ -967,19 +1822,97 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
     return ids.some((id) => datos.deportistas.some((dep) => dep.id === id && dep.disciplina === filtroDisciplina))
   }
 
+  // Ejecuta la busqueda dinamica sobre el texto relevante de cada modulo.
+  const coincideBusqueda = (item) => {
+    if (!busquedaListaNormalizada) return true
+
+    const fragmentos = [
+      item.nombre,
+      item.correo,
+      item.disciplina,
+      item.tipo,
+      item.titulo,
+      item.descripcion,
+      item.estado,
+      item.ubicacion,
+      item.resultado,
+      item.fecha,
+      item.nota,
+      item.prioridad,
+      item.deportista,
+      ...(item.asignadoNombres || []),
+      ...(item.asignaciones || []).flatMap((asignacion) => [
+        asignacion.nombre,
+        asignacion.estado,
+        asignacion.objetivo,
+        asignacion.progreso,
+      ]),
+    ]
+
+    return fragmentos.some((fragmento) => textoIncluye(fragmento, busquedaListaNormalizada))
+  }
+
   const deportistasFiltrados = datos.deportistas.filter((deportista) => {
     const coincideId = !filtroDeportistaId || deportista.id === filtroDeportistaId
     const coincideDisciplina = !filtroDisciplina || deportista.disciplina === filtroDisciplina
-    return coincideId && coincideDisciplina
+    return coincideId && coincideDisciplina && coincideBusqueda(deportista)
   })
 
-  const sesionesFiltradas = datos.sesiones.filter((sesion) => coincideFiltroDeportista(sesion) && coincideFiltroDisciplina(sesion))
-  const metasFiltradas = datos.metas.filter((meta) => coincideFiltroDeportista(meta) && coincideFiltroDisciplina(meta))
-  const competenciasFiltradas = datos.competencias.filter((competencia) => coincideFiltroDeportista(competencia) && coincideFiltroDisciplina(competencia))
-  const observacionesFiltradas = datos.observaciones.filter((observacion) => coincideFiltroDeportista(observacion) && coincideFiltroDisciplina(observacion))
+  const sesionesFiltradas = datos.sesiones.filter((sesion) => coincideFiltroDeportista(sesion) && coincideFiltroDisciplina(sesion) && coincideBusqueda(sesion))
+  const metasFiltradas = datos.metas.filter((meta) => coincideFiltroDeportista(meta) && coincideFiltroDisciplina(meta) && coincideBusqueda(meta))
+  const competenciasFiltradas = datos.competencias.filter((competencia) => coincideFiltroDeportista(competencia) && coincideFiltroDisciplina(competencia) && coincideBusqueda(competencia))
+  const observacionesFiltradas = datos.observaciones.filter((observacion) => coincideFiltroDeportista(observacion) && coincideFiltroDisciplina(observacion) && coincideBusqueda(observacion))
+
+  // Filtra deportistas dentro del selector multiple para no saturar la asignacion.
+  const deportistasSelectorFiltrados = opcionesDeportistas.filter((deportista) => {
+    const coincideTexto =
+      !busquedaSelectorNormalizada ||
+      textoIncluye(
+        [deportista.nombre, deportista.descripcion].filter(Boolean).join(' '),
+        busquedaSelectorNormalizada,
+      )
+    const coincideDisciplina = !filtroDisciplina || deportista.descripcion.includes(filtroDisciplina)
+    return coincideTexto && coincideDisciplina
+  })
+
+  const seleccionarTodosVisibles = (setter) => {
+    const idsVisibles = deportistasSelectorFiltrados.map((deportista) => deportista.id)
+    setter((previo) => ({
+      ...previo,
+      asignados: Array.from(new Set([...(previo.asignados || []), ...idsVisibles])),
+    }))
+  }
+
+  const deseleccionarTodosVisibles = (setter) => {
+    const idsVisibles = new Set(deportistasSelectorFiltrados.map((deportista) => deportista.id))
+    setter((previo) => ({
+      ...previo,
+      asignados: (previo.asignados || []).filter((id) => !idsVisibles.has(id)),
+    }))
+  }
+
+  const totalResultadosVisibles =
+    moduloActivo === 'deportistas'
+      ? deportistasFiltrados.length
+      : moduloActivo === 'sesiones'
+        ? sesionesFiltradas.length
+        : moduloActivo === 'metas'
+          ? metasFiltradas.length
+          : moduloActivo === 'competencias'
+            ? competenciasFiltradas.length
+            : observacionesFiltradas.length
 
   const FiltrosEntrenador = (
-    <div className="mb-6 grid gap-4 rounded-2xl border border-white/8 bg-white/5 p-4 md:grid-cols-3">
+    <div className="mb-6 grid gap-4 rounded-2xl border border-white/8 bg-white/5 p-4 md:grid-cols-4">
+      <div className="md:col-span-4">
+        <Etiqueta>{t('Busqueda dinamica', 'Dynamic search')}</Etiqueta>
+        <input
+          value={busquedaLista}
+          onChange={(e) => setBusquedaLista(e.target.value)}
+          placeholder={t('Busque por nombre, correo, disciplina, titulo o descripcion.', 'Search by name, email, discipline, title or description.')}
+          className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+        />
+      </div>
       <div>
         <Etiqueta>{t('Filtrar por deportista', 'Filter by athlete')}</Etiqueta>
         <select
@@ -1012,11 +1945,17 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           onClick={() => {
             setFiltroDeportistaId('')
             setFiltroDisciplina('')
+            setBusquedaLista('')
           }}
           className="w-full rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
         >
           {t('Limpiar filtros', 'Clear filters')}
         </button>
+      </div>
+      <div className="flex items-end">
+        <div className="w-full rounded-2xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+          {t('Resultados visibles', 'Visible results')}: <span className="font-semibold">{totalResultadosVisibles}</span>
+        </div>
       </div>
     </div>
   )
@@ -1028,7 +1967,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Perfil profesional', 'Professional profile')}</p>
             <h3 className="mt-2 text-2xl font-semibold">{t('Configuracion del entrenador', 'Coach settings')}</h3>
-            <p className="mt-3 max-w-xl text-sm text-slate-300">
+            <p className={`mt-3 max-w-xl text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-500'}`}>
               {t('Esta ficha resume su enfoque de trabajo y mantiene el perfil alineado con el estilo visual del tablero.', 'This card summarizes your coaching focus and keeps your profile aligned with the dashboard visual style.')}
             </p>
           </div>
@@ -1055,9 +1994,13 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                 type="file"
                 accept="image/*"
                 onChange={(e) => cargarFotoPerfil(e.target.files?.[0])}
-                className="mt-2 block w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-200"
+                className={`mt-2 block w-full rounded-2xl border px-4 py-3 text-sm transition ${
+                  esOscuro
+                    ? 'border-white/10 bg-slate-950/70 text-slate-200 file:text-slate-100'
+                    : 'border-slate-300 bg-white text-slate-700 shadow-[0_10px_24px_rgba(148,163,184,0.12)] file:text-slate-700'
+                }`}
               />
-              <p className="mt-2 text-xs text-slate-400">
+              <p className={`mt-2 text-xs ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>
                 {t('Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.', 'You can upload JPG, JPEG, PNG, WEBP, GIF, SVG and other compatible image formats.')}
               </p>
             </div>
@@ -1066,11 +2009,15 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
               <textarea
                 value={perfil.metodologia}
                 onChange={(e) => setPerfil({ ...perfil, metodologia: e.target.value })}
-                className="mt-2 min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+                className={`mt-2 min-h-28 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                  esOscuro
+                    ? 'border-white/10 bg-slate-950/70 text-white'
+                    : 'border-slate-300 bg-white text-slate-900 shadow-[0_12px_28px_rgba(148,163,184,0.12)]'
+                }`}
               />
             </div>
             <div className="md:col-span-2 flex flex-wrap gap-3">
-              <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
+              <button className="rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#2563eb)] px-5 py-3 font-semibold text-white shadow-[0_16px_34px_rgba(37,99,235,0.28)] transition hover:-translate-y-0.5 hover:brightness-110">
                 {t('Guardar perfil', 'Save profile')}
               </button>
               {perfilTieneContenido && (
@@ -1080,7 +2027,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     setPerfil(datos.perfil)
                     setEditandoPerfil(false)
                   }}
-                  className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
+                  className={`rounded-2xl border px-4 py-3 font-semibold transition ${
+                    esOscuro
+                      ? 'border-white/15 text-slate-200 hover:bg-white/5'
+                      : 'border-slate-300 bg-white text-slate-700 shadow-[0_10px_24px_rgba(148,163,184,0.1)] hover:bg-slate-50'
+                  }`}
                 >
                   {t('Cancelar edicion', 'Cancel editing')}
                 </button>
@@ -1258,9 +2209,13 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             </select>
           </div>
           <SelectorDeportistas
-            deportistas={opcionesDeportistas}
+            deportistas={deportistasSelectorFiltrados}
             seleccionados={nuevaSesion.asignados}
             onToggle={(deportistaId) => toggleAsignado(nuevaSesion.asignados, setNuevaSesion, deportistaId)}
+            busqueda={busquedaSelector}
+            onBusquedaChange={setBusquedaSelector}
+            onSeleccionarTodos={() => seleccionarTodosVisibles(setNuevaSesion)}
+            onDeseleccionarTodos={() => deseleccionarTodosVisibles(setNuevaSesion)}
           />
           <div className="flex gap-3">
             <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
@@ -1396,9 +2351,13 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           <Campo label="Objetivo numerico" type="number" value={nuevaMeta.objetivo} onChange={(value) => setNuevaMeta({ ...nuevaMeta, objetivo: value })} />
           <Campo label="Fecha limite" type="date" value={nuevaMeta.fechaLimite} onChange={(value) => setNuevaMeta({ ...nuevaMeta, fechaLimite: value })} />
           <SelectorDeportistas
-            deportistas={opcionesDeportistas}
+            deportistas={deportistasSelectorFiltrados}
             seleccionados={nuevaMeta.asignados}
             onToggle={(deportistaId) => toggleAsignado(nuevaMeta.asignados, setNuevaMeta, deportistaId)}
+            busqueda={busquedaSelector}
+            onBusquedaChange={setBusquedaSelector}
+            onSeleccionarTodos={() => seleccionarTodosVisibles(setNuevaMeta)}
+            onDeseleccionarTodos={() => deseleccionarTodosVisibles(setNuevaMeta)}
           />
           {nuevaMeta.asignados.length > 0 && (
             <div className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
@@ -1619,9 +2578,13 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           <Campo label="Estado" value={nuevaCompetencia.estado} onChange={(value) => setNuevaCompetencia({ ...nuevaCompetencia, estado: value })} />
           <Campo label="Resultado esperado o nota" value={nuevaCompetencia.resultado} onChange={(value) => setNuevaCompetencia({ ...nuevaCompetencia, resultado: value })} />
           <SelectorDeportistas
-            deportistas={opcionesDeportistas}
+            deportistas={deportistasSelectorFiltrados}
             seleccionados={nuevaCompetencia.asignados}
             onToggle={(deportistaId) => toggleAsignado(nuevaCompetencia.asignados, setNuevaCompetencia, deportistaId)}
+            busqueda={busquedaSelector}
+            onBusquedaChange={setBusquedaSelector}
+            onSeleccionarTodos={() => seleccionarTodosVisibles(setNuevaCompetencia)}
+            onDeseleccionarTodos={() => deseleccionarTodosVisibles(setNuevaCompetencia)}
           />
           <div className="flex gap-3">
             <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
@@ -1847,6 +2810,155 @@ function ResumenCard({ titulo, valor, detalle }) {
   )
 }
 
+// Panel reutilizable para que cualquier usuario autenticado pueda actualizar su contrasena.
+function BloqueCambioContrasena() {
+  const { esOscuro, t } = useUI()
+  const [formulario, setFormulario] = useState({
+    contrasenaActual: '',
+    nuevaContrasena: '',
+  })
+  const [cargando, setCargando] = useState(false)
+  const [mensaje, setMensaje] = useState('')
+  const [error, setError] = useState('')
+  const validacion = validarContrasenaCliente(formulario.nuevaContrasena, reglasContrasenaPorDefecto)
+
+  // Envia al backend la contrasena actual y la nueva con validacion previa en cliente.
+  const manejarCambioContrasena = async (e) => {
+    e.preventDefault()
+    setCargando(true)
+    setMensaje('')
+    setError('')
+
+    if (!validacion.esValida) {
+      setError(t('La nueva contrasena aun no cumple todos los requisitos.', 'The new password does not meet every requirement yet.'))
+      setCargando(false)
+      return
+    }
+
+    try {
+      const respuesta = await authServicio.cambiarContrasena(formulario)
+      setMensaje(respuesta.mensaje || t('Contrasena actualizada correctamente.', 'Password updated successfully.'))
+      setFormulario({ contrasenaActual: '', nuevaContrasena: '' })
+    } catch (err) {
+      const errores = err.response?.data?.errores
+      setError(
+        errores?.length
+          ? errores.join(' ')
+          : err.response?.data?.mensaje || t('No se pudo cambiar la contrasena.', 'Password could not be changed.'),
+      )
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  return (
+    <div className={`rounded-[28px] border p-5 ${
+      esOscuro
+        ? 'border-white/8 bg-white/5'
+        : 'border-slate-200/80 bg-white shadow-[0_14px_30px_rgba(148,163,184,0.12)]'
+    }`}>
+      <p className="text-xs uppercase tracking-[0.28em] text-cyan-300">{t('Seguridad de la cuenta', 'Account security')}</p>
+      <h4 className="mt-3 text-xl font-semibold">{t('Cambiar contrasena', 'Change password')}</h4>
+      <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
+        {t('Actualice su contrasena sin salir de la sesion. Se aplican las mismas reglas de seguridad del registro.', 'Update your password without leaving the session. The same security rules from registration apply here.')}
+      </p>
+
+      {mensaje && (
+        <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
+          esOscuro
+            ? 'border-cyan-400/20 bg-cyan-400/10 text-cyan-100'
+            : 'border-cyan-300 bg-cyan-50 text-cyan-900'
+        }`}>
+          {mensaje}
+        </div>
+      )}
+
+      {error && (
+        <div className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
+          esOscuro
+            ? 'border-rose-400/20 bg-rose-400/10 text-rose-100'
+            : 'border-rose-300 bg-rose-50 text-rose-900'
+        }`}>
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={manejarCambioContrasena} className="mt-5 grid gap-4 lg:grid-cols-2">
+        <Campo
+          label={t('Contrasena actual', 'Current password')}
+          type="password"
+          value={formulario.contrasenaActual}
+          onChange={(value) => setFormulario((previo) => ({ ...previo, contrasenaActual: value }))}
+        />
+        <Campo
+          label={t('Nueva contrasena', 'New password')}
+          type="password"
+          value={formulario.nuevaContrasena}
+          onChange={(value) => setFormulario((previo) => ({ ...previo, nuevaContrasena: value }))}
+        />
+        <div className={`lg:col-span-2 rounded-2xl border p-4 ${
+          esOscuro
+            ? 'border-white/10 bg-slate-950/45'
+            : 'border-slate-200 bg-slate-50'
+        }`}>
+          <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">
+            {t('Requisitos de seguridad', 'Security requirements')}
+          </p>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {validacion.validaciones.map((item) => (
+              <p
+                key={item.id}
+                className={`text-sm ${item.cumplida ? 'text-emerald-400' : (esOscuro ? 'text-slate-300' : 'text-slate-600')}`}
+              >
+                {item.cumplida ? t('Cumple', 'Met') : t('Pendiente', 'Pending')}: {item.texto}
+              </p>
+            ))}
+          </div>
+        </div>
+        <div className="lg:col-span-2 flex flex-wrap gap-3">
+          <button
+            type="submit"
+            disabled={cargando || !validacion.esValida}
+            className="rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#2563eb)] px-5 py-3 font-semibold text-white shadow-[0_16px_34px_rgba(37,99,235,0.28)] transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {cargando ? t('Actualizando...', 'Updating...') : t('Actualizar contrasena', 'Update password')}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFormulario({ contrasenaActual: '', nuevaContrasena: '' })
+              setMensaje('')
+              setError('')
+            }}
+            className={`rounded-2xl border px-4 py-3 font-semibold transition ${
+              esOscuro
+                ? 'border-white/15 text-slate-200 hover:bg-white/5'
+                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            {t('Limpiar', 'Clear')}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function MiniDatoAdmin({ titulo, valor, amplio = false }) {
+  const { esOscuro } = useUI()
+
+  return (
+    <div className={`rounded-2xl border px-4 py-3 ${
+      esOscuro
+        ? 'border-white/8 bg-slate-950/45'
+        : 'border-slate-200 bg-slate-50'
+    } ${amplio ? 'min-h-[6.5rem]' : ''}`}>
+      <p className={`text-[11px] uppercase tracking-[0.22em] ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>{titulo}</p>
+      <p className={`mt-3 text-2xl font-bold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{valor}</p>
+    </div>
+  )
+}
+
 function Panel({ children, className = '' }) {
   const { esOscuro } = useUI()
 
@@ -1984,28 +3096,85 @@ function perfilEntrenadorTieneContenido(perfil = {}) {
   )
 }
 
-function SelectorDeportistas({ deportistas, seleccionados, onToggle }) {
-  const { esOscuro } = useUI()
+function SelectorDeportistas({
+  deportistas,
+  seleccionados,
+  onToggle,
+  busqueda,
+  onBusquedaChange,
+  onSeleccionarTodos,
+  onDeseleccionarTodos,
+}) {
+  const { esOscuro, t } = useUI()
+  const seleccionadosVisibles = deportistas.filter((deportista) => seleccionados.includes(deportista.id)).length
 
   return (
     <div>
       <Etiqueta>{t('Deportistas asignados', 'Assigned athletes')}</Etiqueta>
       <div className={`mt-3 space-y-3 rounded-2xl border p-4 ${esOscuro ? 'border-white/10 bg-slate-950/60' : 'border-slate-200 bg-white/80'}`}>
+        <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
+          <input
+            value={busqueda}
+            onChange={(e) => onBusquedaChange(e.target.value)}
+            placeholder={t('Buscar deportista por nombre, correo o disciplina.', 'Search athlete by name, email or discipline.')}
+            className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+              esOscuro
+                ? 'border-white/10 bg-slate-950/80 text-white'
+                : 'border-slate-300 bg-white text-slate-900'
+            }`}
+          />
+          <button
+            type="button"
+            onClick={onSeleccionarTodos}
+            className="rounded-2xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/18"
+          >
+            {t('Seleccionar visibles', 'Select visible')}
+          </button>
+          <button
+            type="button"
+            onClick={onDeseleccionarTodos}
+            className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+              esOscuro
+                ? 'border-white/15 text-slate-200 hover:bg-white/5'
+                : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            {t('Deseleccionar visibles', 'Deselect visible')}
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <span className={`rounded-full px-3 py-1 ${esOscuro ? 'bg-white/6 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+            {t('Visibles', 'Visible')}: {deportistas.length}
+          </span>
+          <span className="rounded-full bg-cyan-400/10 px-3 py-1 text-cyan-100">
+            {t('Seleccionados en esta vista', 'Selected in this view')}: {seleccionadosVisibles}
+          </span>
+          <span className={`rounded-full px-3 py-1 ${esOscuro ? 'bg-white/6 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+            {t('Seleccion total', 'Total selected')}: {seleccionados.length}
+          </span>
+        </div>
+
         {deportistas.length === 0 ? (
           <EstadoVacio mensaje={t('Primero vincule deportistas reales para poder asignarles sesiones, metas o competencias.', 'Link real athletes first so you can assign sessions, goals or competitions.')} />
         ) : (
           deportistas.map((deportista) => (
-            <label key={deportista.id} className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 ${esOscuro ? 'border-white/8 bg-white/5' : 'border-slate-200 bg-slate-50/80'}`}>
-              <input
-                type="checkbox"
-                checked={seleccionados.includes(deportista.id)}
-                onChange={() => onToggle(deportista.id)}
-                className="mt-1"
-              />
-              <div>
-                <p className="font-medium">{deportista.nombre}</p>
-                <p className={`text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{deportista.descripcion}</p>
+            <label key={deportista.id} className={`flex cursor-pointer items-start justify-between gap-4 rounded-2xl border p-4 transition ${seleccionados.includes(deportista.id) ? 'border-cyan-400/35 bg-cyan-400/10' : (esOscuro ? 'border-white/8 bg-white/5' : 'border-slate-200 bg-slate-50/80')}`}>
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={seleccionados.includes(deportista.id)}
+                  onChange={() => onToggle(deportista.id)}
+                  className="mt-1"
+                />
+                <div>
+                  <p className="font-medium">{deportista.nombre}</p>
+                  <p className={`text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{deportista.descripcion}</p>
+                </div>
               </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${seleccionados.includes(deportista.id) ? 'bg-cyan-400/20 text-cyan-100' : (esOscuro ? 'bg-white/8 text-slate-300' : 'bg-white text-slate-500')}`}>
+                {seleccionados.includes(deportista.id) ? t('Incluido', 'Included') : t('Disponible', 'Available')}
+              </span>
             </label>
           ))
         )}
@@ -2059,3 +3228,4 @@ function ListaEntrenadorAsignaciones({ titulo, vacio, items, renderItem }) {
 }
 
 export default Tablero
+

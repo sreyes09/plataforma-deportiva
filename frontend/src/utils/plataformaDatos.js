@@ -47,6 +47,40 @@ const convertirPorcentaje = (progreso, objetivo) => {
 export const crearPanelVacio = (usuario) => {
   if (!usuario) return null
 
+  if (usuario.rol === 'administrador') {
+    return {
+      rol: usuario.rol,
+      perfil: {
+        nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
+        foto: '',
+        cargo: 'Administrador general',
+        area: 'Gestion de plataforma',
+        bio: '',
+      },
+      estadisticas: [],
+      metas: [],
+      logros: [],
+      competencias: [],
+      deportistas: [],
+      sesiones: [],
+      observaciones: [],
+      usuarios: [],
+      resumenAdmin: {
+        usuarios: 0,
+        deportistas: 0,
+        entrenadores: 0,
+        administradores: 0,
+        activos: 0,
+        inactivos: 0,
+        estadisticas: 0,
+        metas: 0,
+        sesiones: 0,
+        competencias: 0,
+      },
+      actividadAdmin: [],
+    }
+  }
+
   if (usuario.rol === 'entrenador') {
     return {
       rol: usuario.rol,
@@ -110,6 +144,12 @@ export const normalizarPanel = (usuario, datos) => {
     deportistas: Array.isArray(datos?.deportistas) ? datos.deportistas : [],
     sesiones: Array.isArray(datos?.sesiones) ? datos.sesiones : [],
     observaciones: Array.isArray(datos?.observaciones) ? datos.observaciones : [],
+    usuarios: Array.isArray(datos?.usuarios) ? datos.usuarios : [],
+    resumenAdmin: {
+      ...(base.resumenAdmin || {}),
+      ...(datos?.resumenAdmin || {}),
+    },
+    actividadAdmin: Array.isArray(datos?.actividadAdmin) ? datos.actividadAdmin : [],
   }
 }
 
@@ -152,6 +192,19 @@ export const obtenerResumenEntrenador = (datos) => {
     promedioProgreso: Math.round(promedioProgreso),
   }
 }
+
+export const obtenerResumenAdministrador = (datos) => ({
+  usuarios: datos.resumenAdmin?.usuarios || 0,
+  deportistas: datos.resumenAdmin?.deportistas || 0,
+  entrenadores: datos.resumenAdmin?.entrenadores || 0,
+  administradores: datos.resumenAdmin?.administradores || 0,
+  activos: datos.resumenAdmin?.activos || 0,
+  inactivos: datos.resumenAdmin?.inactivos || 0,
+  estadisticas: datos.resumenAdmin?.estadisticas || 0,
+  metas: datos.resumenAdmin?.metas || 0,
+  sesiones: datos.resumenAdmin?.sesiones || 0,
+  competencias: datos.resumenAdmin?.competencias || 0,
+})
 
 export const construirSerieDeportista = (datos) =>
   (datos.metas.length > 0

@@ -130,5 +130,60 @@ const enviarCodigoDosPasos = async ({ correo, nombre, codigo }) => {
 
 module.exports = {
   enviarCodigoDosPasos,
+  enviarCodigoRestablecimiento: async ({ correo, nombre, codigo }) => {
+    const destinatario = String(correo || '').trim().toLowerCase();
+    const marcaTiempo = new Date().toISOString();
+
+    if (!smtpConfigurado()) {
+      if (!usarRespaldoLocal()) {
+        throw new Error(
+          'Faltan variables SMTP para enviar correos. Configure SMTP_HOST, SMTP_PORT, SMTP_USER y SMTP_PASS.',
+        );
+      }
+
+      registrarCodigoEnConsola({ correo: destinatario, nombre, codigo });
+      registrarLogCorreo(
+        `[${marcaTiempo}] MODO=LOCAL-RESET | USUARIO=${nombre} | DESTINATARIO=${destinatario} | CODIGO=${codigo}`
+      );
+      return { modoEntrega: 'consola-local', destinatario };
+    }
+
+    const transporte = crearTransporteCorreo();
+    const remitente = process.env.SMTP_FROM || process.env.SMTP_USER;
+
+    const info = await transporte.sendMail({
+      from: `"Vyrox" <${remitente}>`,
+      to: destinatario,
+      replyTo: remitente,
+      subject: 'Codigo para restablecer tu contrasena en Vyrox',
+      text: `Hola ${nombre}.\n\nTu codigo para restablecer la contrasena de Vyrox es: ${codigo}\n\nEste codigo vence en 10 minutos.\n\nSi no solicitaste este cambio, puedes ignorar este mensaje.\n`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111827;">
+          <h2 style="margin: 0 0 16px;">Vyrox</h2>
+          <p>Hola ${nombre},</p>
+          <p>Tu codigo para restablecer la contrasena es:</p>
+          <p style="font-size: 28px; font-weight: bold; letter-spacing: 6px; margin: 18px 0;">
+            ${codigo}
+          </p>
+          <p>Este codigo vence en 10 minutos.</p>
+          <p>Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+        </div>
+      `,
+    });
+
+    const lineaLog =
+      `[${marcaTiempo}] MODO=CORREO-RESET | REMITENTE=${remitente} | DESTINATARIO=${destinatario} | ` +
+      `MESSAGE_ID=${info.messageId} | ACEPTADOS=${(info.accepted || []).join(',') || 'ninguno'}`;
+
+    console.log(`[RESET MAIL] ${lineaLog}`);
+    registrarLogCorreo(lineaLog);
+
+    return {
+      modoEntrega: 'correo',
+      destinatario,
+      messageId: info.messageId,
+      accepted: info.accepted || [],
+    };
+  },
   smtpConfigurado,
 };

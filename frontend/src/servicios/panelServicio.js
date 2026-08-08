@@ -35,6 +35,16 @@ const panelServicio = {
     )
     return respuesta.data
   },
+
+  // Permite al administrador activar o desactivar cuentas del sistema.
+  actualizarEstadoUsuario: async (usuarioId, estado) => {
+    const respuesta = await axios.patch(
+      `${URL_BASE}/panel/usuarios/${usuarioId}/estado`,
+      { estado },
+      obtenerConfiguracion()
+    )
+    return respuesta.data
+  },
 }
 
 export default panelServicio

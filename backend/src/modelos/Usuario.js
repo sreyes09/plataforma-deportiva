@@ -53,6 +53,21 @@ const usuarioEsquema = new mongoose.Schema({
       default: null,
     },
   },
+  // Seccion separada para la recuperacion de contrasena desde el login.
+  restablecimiento: {
+    codigoHash: {
+      type: String,
+      default: '',
+    },
+    expiraEn: {
+      type: Date,
+      default: null,
+    },
+    ultimoEnvio: {
+      type: Date,
+      default: null,
+    },
+  },
   // Fecha administrativa que ayuda a auditoria y orden de cuentas.
   fechaRegistro: {
     type: Date,

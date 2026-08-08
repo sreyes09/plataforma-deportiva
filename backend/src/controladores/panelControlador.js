@@ -4,6 +4,27 @@ const Usuario = require('../modelos/Usuario');
 
 // Crea la estructura inicial del panel para cada rol del sistema.
 const crearPanelBase = (usuario) => {
+  if (usuario.rol === 'administrador') {
+    return {
+      usuarioId: usuario._id,
+      rol: usuario.rol,
+      perfil: {
+        nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
+        foto: '',
+        cargo: 'Administrador general',
+        area: 'Gestion de plataforma',
+        bio: '',
+      },
+      competencias: [],
+      deportistas: [],
+      sesiones: [],
+      observaciones: [],
+      estadisticas: [],
+      metas: [],
+      logros: [],
+    };
+  }
+
   if (usuario.rol === 'entrenador') {
     return {
       usuarioId: usuario._id,
@@ -338,6 +359,77 @@ const construirLogrosDesdeMetas = (metasAsignadas) =>
       nivel: 'oro',
     }));
 
+const normalizarPanelAdministrador = async (panel) => {
+  const usuarios = await Usuario.find({})
+    .sort({ fechaRegistro: -1 })
+    .lean();
+  const paneles = await Panel.find({}).lean();
+  const panelPorUsuario = new Map(
+    paneles.map((item) => [item.usuarioId?.toString?.() || '', item])
+  );
+
+  const usuariosNormalizados = usuarios.map((usuario) => {
+    const panelUsuario = panelPorUsuario.get(usuario._id.toString()) || {};
+    const estadisticas = Array.isArray(panelUsuario.estadisticas) ? panelUsuario.estadisticas.length : 0;
+    const metas = Array.isArray(panelUsuario.metas) ? panelUsuario.metas.length : 0;
+    const sesiones = Array.isArray(panelUsuario.sesiones) ? panelUsuario.sesiones.length : 0;
+    const competencias = Array.isArray(panelUsuario.competencias) ? panelUsuario.competencias.length : 0;
+
+    return {
+      id: usuario._id.toString(),
+      nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`.trim(),
+      correo: usuario.correo,
+      rol: usuario.rol,
+      estado: usuario.estado || 'activo',
+      fechaRegistro: usuario.fechaRegistro,
+      perfil: panelUsuario.perfil || {},
+      resumen: {
+        estadisticas,
+        metas,
+        sesiones,
+        competencias,
+      },
+    };
+  });
+
+  const resumen = {
+    usuarios: usuariosNormalizados.length,
+    deportistas: usuariosNormalizados.filter((item) => item.rol === 'deportista').length,
+    entrenadores: usuariosNormalizados.filter((item) => item.rol === 'entrenador').length,
+    administradores: usuariosNormalizados.filter((item) => item.rol === 'administrador').length,
+    activos: usuariosNormalizados.filter((item) => item.estado === 'activo').length,
+    inactivos: usuariosNormalizados.filter((item) => item.estado === 'inactivo').length,
+    estadisticas: usuariosNormalizados.reduce((acum, item) => acum + item.resumen.estadisticas, 0),
+    metas: usuariosNormalizados.reduce((acum, item) => acum + item.resumen.metas, 0),
+    sesiones: usuariosNormalizados.reduce((acum, item) => acum + item.resumen.sesiones, 0),
+    competencias: usuariosNormalizados.reduce((acum, item) => acum + item.resumen.competencias, 0),
+  };
+
+  const actividad = usuariosNormalizados
+    .slice()
+    .sort((a, b) => {
+      const totalA = a.resumen.estadisticas + a.resumen.metas + a.resumen.sesiones + a.resumen.competencias;
+      const totalB = b.resumen.estadisticas + b.resumen.metas + b.resumen.sesiones + b.resumen.competencias;
+      return totalB - totalA;
+    })
+    .slice(0, 8);
+
+  return {
+    rol: panel.rol,
+    perfil: panel.perfil || {},
+    estadisticas: [],
+    metas: [],
+    logros: [],
+    competencias: [],
+    deportistas: [],
+    sesiones: [],
+    observaciones: [],
+    usuarios: usuariosNormalizados,
+    resumenAdmin: resumen,
+    actividadAdmin: actividad,
+  };
+};
+
 const sincronizarMetasDeportista = async (usuarioId, metas = []) => {
   const metasPorId = new Map(
     (metas || [])
@@ -545,6 +637,10 @@ const obtenerPanel = async (req, res) => {
 
     const panel = await obtenerPanelBase(usuario);
 
+    if (usuario.rol === 'administrador') {
+      return res.json(await normalizarPanelAdministrador(panel));
+    }
+
     if (usuario.rol === 'entrenador') {
       return res.json(await normalizarPanelEntrenador(panel));
     }
@@ -565,6 +661,25 @@ const actualizarPanel = async (req, res) => {
 
     const panelActual = await obtenerPanelBase(usuario);
     const datos = req.body || {};
+
+    if (usuario.rol === 'administrador') {
+      const panel = await Panel.findOneAndUpdate(
+        { usuarioId: usuario._id },
+        {
+          $set: {
+            rol: usuario.rol,
+            perfil: {
+              ...panelActual.perfil,
+              ...(datos.perfil || {}),
+              nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
+            },
+          },
+        },
+        { new: true, runValidators: true }
+      );
+
+      return res.json(await normalizarPanelAdministrador(panel));
+    }
 
     if (usuario.rol === 'entrenador') {
       const actualizacion = sanitizarPanelEntrenador(datos, panelActual);
@@ -674,8 +789,44 @@ const vincularDeportista = async (req, res) => {
   }
 };
 
+const actualizarEstadoUsuario = async (req, res) => {
+  try {
+    const administrador = await Usuario.findById(req.usuario.id);
+    const { usuarioId } = req.params;
+    const { estado } = req.body || {};
+
+    if (!administrador || administrador.rol !== 'administrador') {
+      return res.status(403).json({ mensaje: 'Solo los administradores pueden cambiar el estado de usuarios' });
+    }
+
+    if (!['activo', 'inactivo'].includes(estado)) {
+      return res.status(400).json({ mensaje: 'El estado solicitado no es valido' });
+    }
+
+    if (administrador._id.toString() === usuarioId.toString() && estado === 'inactivo') {
+      return res.status(400).json({ mensaje: 'No puedes desactivar tu propia cuenta de administrador' });
+    }
+
+    const usuarioActualizado = await Usuario.findByIdAndUpdate(
+      usuarioId,
+      { $set: { estado } },
+      { new: true }
+    );
+
+    if (!usuarioActualizado) {
+      return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+    }
+
+    const panelAdmin = await obtenerPanelBase(administrador);
+    return res.json(await normalizarPanelAdministrador(panelAdmin));
+  } catch (error) {
+    return res.status(500).json({ mensaje: 'Error al actualizar el estado del usuario', error: error.message });
+  }
+};
+
 module.exports = {
   obtenerPanel,
   actualizarPanel,
   vincularDeportista,
+  actualizarEstadoUsuario,
 };

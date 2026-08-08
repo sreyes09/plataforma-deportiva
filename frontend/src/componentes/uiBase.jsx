@@ -45,7 +45,7 @@ export function BotonSecundario({ children, className = '', ...props }) {
         'rounded-2xl px-5 py-3 font-semibold transition duration-200 hover:-translate-y-0.5',
         esOscuro
           ? 'border border-white/14 bg-white/6 text-slate-100 hover:bg-white/10'
-          : 'border border-slate-300 bg-white/70 text-slate-700 hover:bg-white',
+          : 'border border-cyan-300/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(235,247,255,0.96))] text-slate-800 shadow-[0_12px_24px_rgba(14,116,144,0.12)] hover:border-cyan-500 hover:bg-white',
         className,
       ].join(' ')}
     >
@@ -101,10 +101,10 @@ export function ControlPreferencia({ etiqueta, valor, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        'rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.24em] transition',
+        'rounded-full border px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.24em] transition',
         esOscuro
           ? 'border-white/12 bg-white/6 text-slate-200 hover:bg-white/10'
-          : 'border-slate-300 bg-white/75 text-slate-700 hover:bg-white',
+          : 'border-cyan-300/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(237,248,255,0.94))] text-slate-800 shadow-[0_10px_24px_rgba(14,116,144,0.12)] hover:border-cyan-500 hover:bg-white',
       ].join(' ')}
     >
       {etiqueta}: {valor}

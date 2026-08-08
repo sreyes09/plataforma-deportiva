@@ -8,7 +8,10 @@ const {
   cifrarCodigoDosPasos,
   compararCodigoDosPasos,
 } = require('../utils/seguridadAuth');
-const { enviarCodigoDosPasos } = require('../utils/correoAuth');
+const {
+  enviarCodigoDosPasos,
+  enviarCodigoRestablecimiento,
+} = require('../utils/correoAuth');
 
 // Centraliza la respuesta que representa una sesión ya verificada.
 // Se usa despues de completar el segundo paso para devolver siempre
@@ -189,9 +192,112 @@ const obtenerReglasContrasena = async (_req, res) => {
   return res.json({ reglas: REGLAS_CONTRASENA });
 };
 
+// Inicia la recuperacion de acceso enviando un codigo temporal al correo registrado.
+const solicitarRestablecimiento = async (req, res) => {
+  try {
+    const { correo = '' } = req.body;
+    const correoNormalizado = correo.trim().toLowerCase();
+
+    const usuario = await Usuario.findOne({ correo: correoNormalizado });
+    if (!usuario) {
+      return res.json({
+        mensaje: 'Si el correo existe en Vyrox, recibira un codigo de restablecimiento.',
+      });
+    }
+
+    const codigo = generarCodigoDosPasos();
+    const codigoHash = await cifrarCodigoDosPasos(codigo);
+    const expiraEn = new Date(Date.now() + 10 * 60 * 1000);
+
+    usuario.restablecimiento = {
+      codigoHash,
+      expiraEn,
+      ultimoEnvio: new Date(),
+    };
+
+    await usuario.save();
+
+    const resultadoEnvio = await enviarCodigoRestablecimiento({
+      correo: usuario.correo,
+      nombre: usuario.nombre,
+      codigo,
+    });
+
+    return res.json({
+      mensaje:
+        resultadoEnvio?.modoEntrega === 'correo'
+          ? 'Codigo de restablecimiento enviado al correo registrado'
+          : 'Codigo de restablecimiento generado en modo local. Revise la consola del servidor.',
+      desafioId: usuario._id,
+      correo: resultadoEnvio?.destinatario || usuario.correo,
+      expiraEnMinutos: 10,
+      modoEntrega: resultadoEnvio?.modoEntrega || 'correo',
+    });
+  } catch (error) {
+    if (error.message.includes('SMTP')) {
+      return res.status(503).json({
+        mensaje:
+          'No se pudo enviar el codigo de restablecimiento por correo. Revise la configuracion SMTP del servidor.',
+        error: error.message,
+      });
+    }
+
+    return res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+  }
+};
+
+// Completa la recuperacion usando el codigo temporal y una nueva contrasena segura.
+const restablecerContrasena = async (req, res) => {
+  try {
+    const { desafioId = '', codigo = '', nuevaContrasena = '' } = req.body;
+
+    const usuario = await Usuario.findById(desafioId);
+    if (!usuario) {
+      return res.status(404).json({ mensaje: 'Solicitud de restablecimiento no encontrada' });
+    }
+
+    if (!usuario.restablecimiento?.codigoHash || !usuario.restablecimiento?.expiraEn) {
+      return res.status(400).json({ mensaje: 'No hay un restablecimiento pendiente para este usuario' });
+    }
+
+    if (new Date(usuario.restablecimiento.expiraEn).getTime() < Date.now()) {
+      usuario.restablecimiento.codigoHash = '';
+      usuario.restablecimiento.expiraEn = null;
+      await usuario.save();
+      return res.status(400).json({ mensaje: 'El codigo de restablecimiento ya expiro' });
+    }
+
+    const codigoValido = await compararCodigoDosPasos(codigo, usuario.restablecimiento.codigoHash);
+    if (!codigoValido) {
+      return res.status(400).json({ mensaje: 'El codigo de restablecimiento es incorrecto' });
+    }
+
+    const validacion = validarContrasena(nuevaContrasena);
+    if (!validacion.esValida) {
+      return res.status(400).json({
+        mensaje: 'La nueva contrasena no cumple con los requisitos de seguridad.',
+        errores: validacion.errores,
+        reglas: REGLAS_CONTRASENA,
+      });
+    }
+
+    const sal = await bcrypt.genSalt(10);
+    usuario.contrasena = await bcrypt.hash(nuevaContrasena, sal);
+    usuario.restablecimiento.codigoHash = '';
+    usuario.restablecimiento.expiraEn = null;
+    await usuario.save();
+
+    return res.json({ mensaje: 'Contrasena restablecida correctamente' });
+  } catch (error) {
+    return res.status(500).json({ mensaje: 'Error en el servidor', error: error.message });
+  }
+};
+
 module.exports = {
   registrar,
   iniciarSesion,
   verificarDosPasos,
   obtenerReglasContrasena,
+  solicitarRestablecimiento,
+  restablecerContrasena,
 };

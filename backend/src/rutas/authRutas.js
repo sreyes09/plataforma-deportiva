@@ -4,6 +4,8 @@ const {
   iniciarSesion,
   verificarDosPasos,
   obtenerReglasContrasena,
+  solicitarRestablecimiento,
+  restablecerContrasena,
 } = require('../controladores/authControlador');
 
 const router = express.Router();
@@ -21,5 +23,9 @@ router.post('/verificar-dos-pasos', verificarDosPasos);
 
 // Reglas publicas para apoyar la validacion en frontend.
 router.get('/reglas-contrasena', obtenerReglasContrasena);
+
+// Recuperacion de acceso desde la pantalla publica.
+router.post('/solicitar-restablecimiento', solicitarRestablecimiento);
+router.post('/restablecer-contrasena', restablecerContrasena);
 
 module.exports = router;
