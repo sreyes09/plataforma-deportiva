@@ -474,17 +474,17 @@ function Inicio() {
               <div className="mb-8">
                 <h3 className={`text-4xl font-bold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
                   {desafio
-                    ? t('Verificacion de acceso', 'Access verification')
+                    ? t('Verificación de acceso', 'Access verification')
                     : vistaAcceso === 'recuperar'
                       ? t('Recuperar acceso', 'Recover access')
-                      : t('Iniciar sesion', 'Sign in')}
+                      : t('Iniciar sesión', 'Sign in')}
                 </h3>
                 <p className={`mt-3 text-lg ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
                   {desafio
                     ? t('Ingrese el código enviado al correo registrado.', 'Enter the code sent to the registered email.')
                     : vistaAcceso === 'recuperar'
                       ? t('Solicite su código y luego defina una nueva contraseña segura.', 'Request your code and then set a new secure password.')
-                      : t('Acceda a su cuenta deportiva y continue con su seguimiento.', 'Access your sports account and continue your tracking.')}
+                      : t('Acceda a su cuenta deportiva y continúe con su seguimiento.', 'Access your sports account and continue your tracking.')}
                 </p>
               </div>
 
@@ -492,7 +492,7 @@ function Inicio() {
                 <div className={`mb-5 rounded-2xl border px-4 py-4 text-sm ${
                   esOscuro
                     ? 'border-cyan-400/20 bg-cyan-400/10 text-cyan-100'
-                    : 'border-cyan-300/70 bg-cyan-100 text-cyan-900'
+                    : 'border-cyan-500/65 bg-cyan-100 text-cyan-950 shadow-[0_10px_24px_rgba(8,145,178,0.18)]'
                 }`}>
                   {mensaje}
                 </div>
@@ -525,7 +525,7 @@ function Inicio() {
 
                   <BotonPrimario type="submit" disabled={cargando} className="flex w-full items-center justify-center gap-3 py-4 text-lg">
                     <span>
-                      {cargando ? t('Verificando codigo...', 'Verifying code...') : t('Verificar y entrar', 'Verify and enter')}
+                      {cargando ? t('Verificando código...', 'Verifying code...') : t('Verificar y entrar', 'Verify and enter')}
                     </span>
                     {!cargando && <Icono tipo="flecha" className="h-5 w-5" />}
                   </BotonPrimario>
@@ -554,15 +554,15 @@ function Inicio() {
                           ? 'border-white/10 bg-slate-950/55'
                           : 'border-cyan-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(240,249,255,0.96))] shadow-[0_16px_30px_rgba(14,116,144,0.1)]'
                       }`}>
-                        <p className="text-xs uppercase tracking-[0.24em] text-cyan-300">
-                          {t('Recuperacion de acceso', 'Access recovery')}
+                        <p className={`text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>
+                          {t('Recuperación de acceso', 'Access recovery')}
                         </p>
                         <h4 className={`mt-3 text-xl font-semibold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
                           {t('Solicitar código de restablecimiento', 'Request a reset code')}
                         </h4>
                         <div className="mt-4 space-y-4">
                           <CampoConIcono
-                            etiqueta={t('Correo electronico', 'Email')}
+                            etiqueta={t('Correo electrónico', 'Email')}
                             icono="correo"
                             type="email"
                             esOscuro={esOscuro}
@@ -584,7 +584,7 @@ function Inicio() {
                           ? 'border-white/10 bg-slate-950/55'
                           : 'border-cyan-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(240,249,255,0.96))] shadow-[0_16px_30px_rgba(14,116,144,0.1)]'
                       }`}>
-                        <p className="text-xs uppercase tracking-[0.24em] text-cyan-300">
+                        <p className={`text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>
                           {t('Restablecimiento activo', 'Active recovery')}
                         </p>
                         <h4 className={`mt-3 text-xl font-semibold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
@@ -616,7 +616,7 @@ function Inicio() {
                           <div className={`rounded-2xl border p-4 ${
                             esOscuro ? 'border-white/10 bg-white/5' : 'border-cyan-200/70 bg-slate-50'
                           }`}>
-                            <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">
+                            <p className={`text-xs uppercase tracking-[0.2em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>
                               {t('Seguridad de la nueva contraseña', 'New password security')}
                             </p>
                             <div className="mt-3 space-y-2">
@@ -664,13 +664,13 @@ function Inicio() {
                     }}
                     className={`w-full py-4 text-base ${esOscuro ? 'border border-white/10 bg-white/5' : 'border border-slate-300 bg-white/80'}`}
                   >
-                    {t('Volver al inicio de sesion', 'Back to sign in')}
+                    {t('Volver al inicio de sesión', 'Back to sign in')}
                   </BotonSecundario>
                 </div>
               ) : (
                 <form onSubmit={manejarCredenciales} className="space-y-6">
                   <CampoConIcono
-                    etiqueta={t('Correo electronico', 'Email')}
+                    etiqueta={t('Correo electrónico', 'Email')}
                     icono="correo"
                     type="email"
                     esOscuro={esOscuro}
