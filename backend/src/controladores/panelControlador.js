@@ -2,12 +2,17 @@ const mongoose = require('mongoose');
 const Panel = require('../modelos/Panel');
 const Usuario = require('../modelos/Usuario');
 
+// Normaliza el rol para evitar fallos por mayusculas, espacios o datos viejos.
+const obtenerRolSeguro = (valor) => String(valor || '').trim().toLowerCase();
+
 // Crea la estructura inicial del panel para cada rol del sistema.
 const crearPanelBase = (usuario) => {
-  if (usuario.rol === 'administrador') {
+  const rol = obtenerRolSeguro(usuario.rol);
+
+  if (rol === 'administrador') {
     return {
       usuarioId: usuario._id,
-      rol: usuario.rol,
+      rol,
       perfil: {
         nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
         foto: '',
@@ -25,10 +30,10 @@ const crearPanelBase = (usuario) => {
     };
   }
 
-  if (usuario.rol === 'entrenador') {
+  if (rol === 'entrenador') {
     return {
       usuarioId: usuario._id,
-      rol: usuario.rol,
+      rol,
       perfil: {
         nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
         foto: '',
@@ -47,9 +52,9 @@ const crearPanelBase = (usuario) => {
     };
   }
 
-  return {
+    return {
     usuarioId: usuario._id,
-    rol: usuario.rol,
+    rol,
     perfil: {
       nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
       foto: '',
@@ -157,15 +162,16 @@ const migrarPanel = async (panel, usuario) => {
 
   const base = crearPanelBase(usuario);
   let cambio = false;
+  const rol = obtenerRolSeguro(usuario.rol);
 
-  panel.rol = usuario.rol;
+  panel.rol = rol;
   panel.perfil = {
     ...base.perfil,
     ...(panel.perfil || {}),
     nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
   };
 
-  if (usuario.rol === 'deportista' && Object.prototype.hasOwnProperty.call(panel.perfil, 'posicion')) {
+  if (rol === 'deportista' && Object.prototype.hasOwnProperty.call(panel.perfil, 'posicion')) {
     delete panel.perfil.posicion;
     cambio = true;
   }
@@ -178,7 +184,7 @@ const migrarPanel = async (panel, usuario) => {
   panel.sesiones = Array.isArray(panel.sesiones) ? panel.sesiones : [];
   panel.observaciones = Array.isArray(panel.observaciones) ? panel.observaciones : [];
 
-  if (usuario.rol === 'entrenador') {
+  if (rol === 'entrenador') {
     const correos = new Set();
     const deportistasMigrados = [];
 
@@ -637,11 +643,13 @@ const obtenerPanel = async (req, res) => {
 
     const panel = await obtenerPanelBase(usuario);
 
-    if (usuario.rol === 'administrador') {
+    const rol = obtenerRolSeguro(usuario.rol);
+
+    if (rol === 'administrador') {
       return res.json(await normalizarPanelAdministrador(panel));
     }
 
-    if (usuario.rol === 'entrenador') {
+    if (rol === 'entrenador') {
       return res.json(await normalizarPanelEntrenador(panel));
     }
 
@@ -662,12 +670,14 @@ const actualizarPanel = async (req, res) => {
     const panelActual = await obtenerPanelBase(usuario);
     const datos = req.body || {};
 
-    if (usuario.rol === 'administrador') {
+    const rol = obtenerRolSeguro(usuario.rol);
+
+    if (rol === 'administrador') {
       const panel = await Panel.findOneAndUpdate(
         { usuarioId: usuario._id },
         {
           $set: {
-            rol: usuario.rol,
+            rol,
             perfil: {
               ...panelActual.perfil,
               ...(datos.perfil || {}),
@@ -681,14 +691,14 @@ const actualizarPanel = async (req, res) => {
       return res.json(await normalizarPanelAdministrador(panel));
     }
 
-    if (usuario.rol === 'entrenador') {
+    if (rol === 'entrenador') {
       const actualizacion = sanitizarPanelEntrenador(datos, panelActual);
 
       const panel = await Panel.findOneAndUpdate(
         { usuarioId: usuario._id },
         {
           $set: {
-            rol: usuario.rol,
+            rol,
             ...actualizacion,
             perfil: {
               ...actualizacion.perfil,
@@ -706,7 +716,7 @@ const actualizarPanel = async (req, res) => {
       { usuarioId: usuario._id },
       {
         $set: {
-          rol: usuario.rol,
+          rol,
           perfil: {
             ...panelActual.perfil,
             ...(datos.perfil || {}),
@@ -746,7 +756,7 @@ const vincularDeportista = async (req, res) => {
     const usuario = await Usuario.findById(req.usuario.id);
     const correo = req.body?.correo?.trim()?.toLowerCase();
 
-    if (!usuario || usuario.rol !== 'entrenador') {
+    if (!usuario || obtenerRolSeguro(usuario.rol) !== 'entrenador') {
       return res.status(403).json({ mensaje: 'Solo los entrenadores pueden vincular deportistas' });
     }
 
@@ -795,7 +805,7 @@ const actualizarEstadoUsuario = async (req, res) => {
     const { usuarioId } = req.params;
     const { estado } = req.body || {};
 
-    if (!administrador || administrador.rol !== 'administrador') {
+    if (!administrador || obtenerRolSeguro(administrador.rol) !== 'administrador') {
       return res.status(403).json({ mensaje: 'Solo los administradores pueden cambiar el estado de usuarios' });
     }
 

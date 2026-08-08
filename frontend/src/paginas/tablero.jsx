@@ -49,6 +49,9 @@ const normalizarTexto = (valor = '') =>
 const textoIncluye = (texto, termino) =>
   normalizarTexto(texto).includes(normalizarTexto(termino))
 
+// Asegura que la UI reaccione bien aunque el rol venga con formato irregular.
+const obtenerRolSeguro = (valor = '') => String(valor || '').trim().toLowerCase()
+
 // Limpia residuos visuales de codificacion vieja antes de mostrarlos en la interfaz.
 const limpiarTextoVisual = (valor = '') =>
   String(valor || '')
@@ -94,14 +97,15 @@ function Tablero() {
   const { usuario, cerrarSesion } = useAuth()
   const { alternarIdioma, alternarTema, esOscuro, idioma, t, tema } = useUI()
   const navegar = useNavigate()
+  const rolUsuario = obtenerRolSeguro(usuario?.rol)
   const [datos, setDatos] = useState(() => crearPanelVacio(usuario))
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [errorApi, setErrorApi] = useState('')
   const [moduloActivo, setModuloActivo] = useState(() =>
-    usuario?.rol === 'entrenador'
+    rolUsuario === 'entrenador'
       ? 'deportistas'
-      : usuario?.rol === 'administrador'
+      : rolUsuario === 'administrador'
         ? 'usuarios'
         : 'perfil'
   )
@@ -193,7 +197,7 @@ function Tablero() {
   const contenido = useMemo(() => {
     if (!usuario || !datos) return null
 
-    if (usuario.rol === 'administrador') {
+    if (rolUsuario === 'administrador') {
       const resumen = obtenerResumenAdministrador(datos)
       return {
         resumen,
@@ -226,7 +230,7 @@ function Tablero() {
       }
     }
 
-    if (usuario.rol === 'entrenador') {
+    if (rolUsuario === 'entrenador') {
       const distribucion = construirPorcentajeMetasEntrenador(datos)
       return {
         resumen: obtenerResumenEntrenador(datos),
@@ -274,7 +278,7 @@ function Tablero() {
       ranking: construirRankingDeportista(datos, usuario),
       modulos: crearModulosDeportista(t),
     }
-  }, [datos, t, usuario])
+  }, [datos, rolUsuario, t, usuario])
 
   if (!usuario || cargando || !datos || !contenido) {
     return (
@@ -284,8 +288,8 @@ function Tablero() {
     )
   }
 
-  const esEntrenador = usuario.rol === 'entrenador'
-  const esAdministrador = usuario.rol === 'administrador'
+  const esEntrenador = rolUsuario === 'entrenador'
+  const esAdministrador = rolUsuario === 'administrador'
   const rolTexto = esAdministrador
     ? t('administrador', 'administrator')
     : esEntrenador
