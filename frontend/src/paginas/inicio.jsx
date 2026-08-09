@@ -9,7 +9,7 @@ import {
   validarContrasenaCliente,
 } from '../utils/seguridadAuth'
 
-// Enmascara el correo para mostrar al usuario a dÃ³nde fue enviado el codigo.
+// Enmascara el correo para mostrar al usuario a dónde fue enviado el código.
 const enmascararCorreo = (correo = '') => {
   const [usuario = '', dominio = ''] = String(correo).split('@')
   if (!usuario || !dominio) return correo
@@ -17,7 +17,7 @@ const enmascararCorreo = (correo = '') => {
   return `${prefijo}${'*'.repeat(Math.max(usuario.length - 2, 1))}@${dominio}`
 }
 
-// Iconos simples en SVG para mantener el diseÃ±o consistente sin dependencias extra.
+// Iconos simples en SVG para mantener el diseño consistente sin dependencias extra.
 function Icono({ tipo, className = 'h-5 w-5' }) {
   const iconos = {
     usuario: (
@@ -143,7 +143,7 @@ function TarjetaCaracteristica({ icono, titulo, descripcion, esOscuro }) {
   )
 }
 
-// IlustraciÃ³n UI abstracta para simular el panel analÃ­tico del mockup.
+// Ilustración UI abstracta para simular el panel analítico del mockup.
 function ResumenVisual({ esOscuro }) {
   return (
     <div className={[
@@ -295,7 +295,7 @@ function Inicio() {
     }
   }
 
-  // Segundo paso: validaciÃ³n del codigo y creaciÃ³n de la sesion final.
+  // Segundo paso: validación del código y creación de la sesión final.
   const manejarVerificacion = async (e) => {
     e.preventDefault()
     setCargando(true)

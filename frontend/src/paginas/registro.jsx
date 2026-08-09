@@ -128,7 +128,7 @@ function RequisitoSeguridad({ cumplida, texto, esOscuro }) {
   )
 }
 
-// Panel visual izquierdo con una composiciÃ³n similar a la referencia enviada.
+// Panel visual izquierdo con una composición similar a la referencia enviada.
 function PanelVisual({ t, esOscuro }) {
   return (
     <section className={[
@@ -292,7 +292,7 @@ function BarraPreferencias({ idioma, alternarIdioma, alternarTema, esOscuro, t, 
   )
 }
 
-// Pantalla de registro con diseÃ±o completo tipo hero y tarjeta de formulario.
+// Pantalla de registro con diseño completo tipo hero y tarjeta de formulario.
 function Registro() {
   const [formulario, setFormulario] = useState({
     nombre: '',
@@ -324,7 +324,7 @@ function Registro() {
     cargarReglas()
   }, [])
 
-  // EvalÃºa en tiempo real el estado de seguridad de la contrasena.
+  // Evalúa en tiempo real el estado de seguridad de la contraseña.
   const validacionContrasena = useMemo(
     () => validarContrasenaCliente(formulario.contrasena, reglasContrasena),
     [formulario.contrasena, reglasContrasena],

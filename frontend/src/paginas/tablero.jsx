@@ -65,7 +65,7 @@ const limpiarTextoVisual = (valor = '') =>
     .replace(/\s+/g, ' ')
     .trim()
 
-// Genera las pestaÃ±as principales en el idioma activo para no duplicar el dashboard.
+// Genera las pestañas principales en el idioma activo para no duplicar el dashboard.
 const crearModulosDeportista = (t) => [
   { id: 'perfil', titulo: t('Perfil deportivo', 'Sports profile'), descripcion: t('Actualiza tus datos personales y disciplina.', 'Update your personal details and discipline.') },
   { id: 'estadisticas', titulo: t('Estadisticas', 'Statistics'), descripcion: t('Registra tu rendimiento individual.', 'Track your individual performance.') },
@@ -110,7 +110,7 @@ function Tablero() {
         : 'perfil'
   )
 
-  // Carga el panel del usuario apenas exista una sesion vÃ¡lida.
+  // Carga el panel del usuario apenas exista una sesión válida.
   useEffect(() => {
     if (!usuario) return
 
@@ -123,7 +123,7 @@ function Tablero() {
         setDatos(normalizarPanel(usuario, respuesta))
       } catch (error) {
         setDatos(crearPanelVacio(usuario))
-        setErrorApi(error.response?.data?.mensaje || 'No se pudo cargar la informaciÃ³n del panel.')
+        setErrorApi(error.response?.data?.mensaje || 'No se pudo cargar la información del panel.')
       } finally {
         setCargando(false)
       }
@@ -132,7 +132,7 @@ function Tablero() {
     cargarPanel()
   }, [usuario])
 
-  // Cierra la sesion y devuelve al login pÃºblico.
+  // Cierra la sesión y devuelve al login público.
   const manejarCerrarSesion = () => {
     cerrarSesion()
     navegar('/')
@@ -247,7 +247,7 @@ function Tablero() {
         },
         graficoSecundario: {
           etiqueta: t('Estado general', 'Overall status'),
-          titulo: `${distribucion.porcentaje}% de deportistas al dÃ­a con sus metas`,
+          titulo: `${distribucion.porcentaje}% de deportistas al día con sus metas`,
           porcentajeCentro: distribucion.porcentaje,
           total: distribucion.total,
         },
@@ -776,7 +776,7 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
       <div className="grid items-start gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-6">
           <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Perfil activo', 'Active profile')}</p>
-          <h3 className="mt-2 text-2xl font-semibold">{t('Informacion deportiva', 'Sports profile information')}</h3>
+          <h3 className="mt-2 text-2xl font-semibold">{t('Información deportiva', 'Sports profile information')}</h3>
           <p className={`mt-3 max-w-xl text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-500'}`}>
             {t('Este perfil lo ve usted en su cuenta y ayuda a que los entrenadores lo identifiquen mejor cuando lo vinculan.', 'This profile is visible in your account and helps coaches identify you better when they link you.')}
           </p>
@@ -900,7 +900,14 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
         </div>
 
         {editandoPerfil || !perfilTieneContenido ? (
-          <form onSubmit={guardarPerfil} className="grid content-start self-start gap-4 md:grid-cols-2">
+          <form
+            onSubmit={guardarPerfil}
+            className={`grid content-start self-start gap-4 rounded-[28px] border p-5 md:grid-cols-2 ${
+              esOscuro
+                ? 'border-white/8 bg-white/5'
+                : 'border-cyan-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(240,249,255,0.96))] shadow-[0_18px_34px_rgba(14,116,144,0.1)]'
+            }`}
+          >
             <Campo label={t('Disciplina', 'Discipline')} value={perfil.disciplina} onChange={(value) => setPerfil({ ...perfil, disciplina: value })} />
             <Campo label={t('Categoría', 'Category')} value={perfil.categoria} onChange={(value) => setPerfil({ ...perfil, categoria: value })} />
             <Campo label={t('Equipo', 'Team')} value={perfil.equipo} onChange={(value) => setPerfil({ ...perfil, equipo: value })} />
@@ -1914,14 +1921,22 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             : observacionesFiltradas.length
 
   const FiltrosEntrenador = (
-    <div className="mb-6 grid gap-4 rounded-2xl border border-white/8 bg-white/5 p-4 md:grid-cols-4">
+    <div className={`mb-6 grid gap-4 rounded-2xl border p-4 md:grid-cols-4 ${
+      esOscuro
+        ? 'border-white/8 bg-white/5'
+        : 'border-cyan-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(240,249,255,0.96))] shadow-[0_16px_30px_rgba(14,116,144,0.1)]'
+    }`}>
       <div className="md:col-span-4">
-        <Etiqueta>{t('Busqueda dinamica', 'Dynamic search')}</Etiqueta>
+        <Etiqueta>{t('Búsqueda dinámica', 'Dynamic search')}</Etiqueta>
         <input
           value={busquedaLista}
           onChange={(e) => setBusquedaLista(e.target.value)}
-          placeholder={t('Busque por nombre, correo, disciplina, titulo o descripcion.', 'Search by name, email, discipline, title or description.')}
-          className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+          placeholder={t('Busque por nombre, correo, disciplina, título o descripción.', 'Search by name, email, discipline, title or description.')}
+          className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+            esOscuro
+              ? 'border-white/10 bg-slate-950/70 text-white placeholder:text-slate-400'
+              : 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'
+          }`}
         />
       </div>
       <div>
@@ -1929,7 +1944,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         <select
           value={filtroDeportistaId}
           onChange={(e) => setFiltroDeportistaId(e.target.value)}
-          className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+          className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+            esOscuro
+              ? 'border-white/10 bg-slate-950/70 text-white'
+              : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'
+          }`}
         >
           <option value="">{t('Todos', 'All')}</option>
           {opcionesDeportistas.map((deportista) => (
@@ -1942,7 +1961,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         <select
           value={filtroDisciplina}
           onChange={(e) => setFiltroDisciplina(e.target.value)}
-          className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+          className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+            esOscuro
+              ? 'border-white/10 bg-slate-950/70 text-white'
+              : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'
+          }`}
         >
           <option value="">{t('Todas', 'All')}</option>
           {disciplinas.map((disciplina) => (
@@ -1958,13 +1981,21 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             setFiltroDisciplina('')
             setBusquedaLista('')
           }}
-          className="w-full rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
+          className={`w-full rounded-2xl border px-4 py-3 font-semibold transition ${
+            esOscuro
+              ? 'border-white/15 text-slate-200 hover:bg-white/5'
+              : 'border-slate-300 bg-white text-slate-700 shadow-[0_10px_24px_rgba(148,163,184,0.1)] hover:bg-slate-50'
+          }`}
         >
           {t('Limpiar filtros', 'Clear filters')}
         </button>
       </div>
       <div className="flex items-end">
-        <div className="w-full rounded-2xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-100">
+        <div className={`w-full rounded-2xl border px-4 py-3 text-sm ${
+          esOscuro
+            ? 'border-cyan-400/25 bg-cyan-400/10 text-cyan-100'
+            : 'border-cyan-300/80 bg-cyan-50 text-cyan-900'
+        }`}>
           {t('Resultados visibles', 'Visible results')}: <span className="font-semibold">{totalResultadosVisibles}</span>
         </div>
       </div>
@@ -1976,14 +2007,14 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
       <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-6">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Perfil profesional', 'Professional profile')}</p>
-            <h3 className="mt-2 text-2xl font-semibold">{t('Configuracion del entrenador', 'Coach settings')}</h3>
-            <p className={`mt-3 max-w-xl text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-500'}`}>
+            <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Perfil profesional', 'Professional profile')}</p>
+            <h3 className="mt-2 text-2xl font-semibold">{t('Configuración del entrenador', 'Coach settings')}</h3>
+            <p className={`mt-3 max-w-xl text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
               {t('Esta ficha resume su enfoque de trabajo y mantiene el perfil alineado con el estilo visual del tablero.', 'This card summarizes your coaching focus and keeps your profile aligned with the dashboard visual style.')}
             </p>
           </div>
           {!perfilTieneContenido && (
-            <EstadoVacio mensaje={t('Todavia no ha guardado su perfil profesional.', 'You have not saved your professional profile yet.')} />
+            <EstadoVacio mensaje={t('Todavía no ha guardado su perfil profesional.', 'You have not saved your professional profile yet.')} />
           )}
         </div>
 
@@ -1994,7 +2025,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
               await guardarCambios((actuales) => ({ ...actuales, perfil }))
               setEditandoPerfil(false)
             }}
-            className="grid gap-4 md:grid-cols-2"
+            className={`grid content-start gap-4 rounded-[28px] border p-5 md:grid-cols-2 ${
+              esOscuro
+                ? 'border-white/8 bg-white/5'
+                : 'border-cyan-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(240,249,255,0.96))] shadow-[0_18px_34px_rgba(14,116,144,0.1)]'
+            }`}
           >
             <Campo label="Especialidad" value={perfil.especialidad} onChange={(value) => setPerfil({ ...perfil, especialidad: value })} />
             <Campo label="Categoria" value={perfil.categoria} onChange={(value) => setPerfil({ ...perfil, categoria: value })} />
@@ -2083,9 +2118,9 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           className="space-y-4"
         >
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Vinculacion real', 'Real linking')}</p>
+            <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Vinculación real', 'Real linking')}</p>
             <h3 className="mt-2 text-2xl font-semibold">{t('Agregar deportista por correo', 'Add athlete by email')}</h3>
-            <p className="mt-2 text-sm text-slate-300">
+            <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
               {t('El deportista debe existir como usuario registrado con rol de deportista.', 'The athlete must already exist as a registered user with the athlete role.')}
             </p>
           </div>
@@ -2098,18 +2133,29 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         <div className="space-y-4">
           {FiltrosEntrenador}
           {deportistasFiltrados.length === 0 ? (
-            <EstadoVacio mensaje={t('Aun no tienes deportistas vinculados. Registre primero sus cuentas y luego agreguelos por correo.', 'You do not have linked athletes yet. Register their accounts first and then add them by email.')} />
+            <EstadoVacio mensaje={t('Aún no tienes deportistas vinculados. Registre primero sus cuentas y luego agréguelos por correo.', 'You do not have linked athletes yet. Register their accounts first and then add them by email.')} />
           ) : (
             deportistasFiltrados.map((deportista) => (
-              <div key={deportista.id} className="rounded-2xl border border-white/8 bg-white/5 p-4">
+              <div
+                key={deportista.id}
+                className={`rounded-2xl border p-4 ${
+                  esOscuro
+                    ? 'border-white/8 bg-white/5'
+                    : 'border-slate-200/80 bg-white shadow-[0_12px_24px_rgba(148,163,184,0.1)]'
+                }`}
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h4 className="font-semibold">{deportista.nombre}</h4>
-                    <p className="mt-1 text-sm text-slate-300">{deportista.correo}</p>
-                    <p className="mt-2 text-sm text-slate-400">{deportista.disciplina || t('Disciplina pendiente', 'Discipline pending')}</p>
+                    <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{deportista.correo}</p>
+                    <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>{deportista.disciplina || t('Disciplina pendiente', 'Discipline pending')}</p>
                   </div>
                   <div className="text-right">
-                    <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-sm text-cyan-200">{deportista.progreso}%</span>
+                    <span className={`rounded-full px-3 py-1 text-sm ${
+                      esOscuro
+                        ? 'bg-cyan-500/15 text-cyan-200'
+                        : 'bg-cyan-100 text-cyan-800'
+                    }`}>{deportista.progreso}%</span>
                     <div className="mt-4">
                       <button
                         type="button"
@@ -2195,17 +2241,21 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           className="space-y-4"
         >
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Asignacion multiple', 'Multi assignment')}</p>
-            <h3 className="mt-2 text-2xl font-semibold">{edicionSesionId ? t('Editar sesion', 'Edit session') : t('Crear sesion', 'Create session')}</h3>
+            <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Asignación múltiple', 'Multi assignment')}</p>
+            <h3 className="mt-2 text-2xl font-semibold">{edicionSesionId ? t('Editar sesión', 'Edit session') : t('Crear sesión', 'Create session')}</h3>
           </div>
           <Campo label="Fecha" type="date" value={nuevaSesion.fecha} onChange={(value) => setNuevaSesion({ ...nuevaSesion, fecha: value })} />
-          <Campo label={t('Tipo de sesion', 'Session type')} value={nuevaSesion.tipo} onChange={(value) => setNuevaSesion({ ...nuevaSesion, tipo: value })} />
+          <Campo label={t('Tipo de sesión', 'Session type')} value={nuevaSesion.tipo} onChange={(value) => setNuevaSesion({ ...nuevaSesion, tipo: value })} />
           <div>
-            <Etiqueta>{t('Descripcion', 'Description')}</Etiqueta>
+            <Etiqueta>{t('Descripción', 'Description')}</Etiqueta>
             <textarea
               value={nuevaSesion.descripcion}
               onChange={(e) => setNuevaSesion({ ...nuevaSesion, descripcion: e.target.value })}
-              className="mt-2 min-h-24 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+              className={`mt-2 min-h-24 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                esOscuro
+                  ? 'border-white/10 bg-slate-950/70 text-white'
+                  : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'
+              }`}
             />
           </div>
           <div>
@@ -2213,7 +2263,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             <select
               value={nuevaSesion.estado}
               onChange={(e) => setNuevaSesion({ ...nuevaSesion, estado: e.target.value })}
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+              className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                esOscuro
+                  ? 'border-white/10 bg-slate-950/70 text-white'
+                  : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'
+              }`}
             >
               <option value="pendiente">{t('Pendiente', 'Pending')}</option>
               <option value="finalizada">{t('Finalizada', 'Completed')}</option>
@@ -2230,13 +2284,17 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           />
           <div className="flex gap-3">
             <button className="rounded-2xl bg-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300">
-              {edicionSesionId ? t('Actualizar sesion', 'Update session') : t('Guardar sesion', 'Save session')}
+              {edicionSesionId ? t('Actualizar sesión', 'Update session') : t('Guardar sesión', 'Save session')}
             </button>
             {edicionSesionId && (
               <button
                 type="button"
                 onClick={resetSesion}
-                className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
+                className={`rounded-2xl border px-4 py-3 font-semibold transition ${
+                  esOscuro
+                    ? 'border-white/15 text-slate-200 hover:bg-white/5'
+                    : 'border-slate-300 bg-white text-slate-700 shadow-[0_10px_24px_rgba(148,163,184,0.1)] hover:bg-slate-50'
+                }`}
               >
                 {t('Cancelar', 'Cancel')}
               </button>
@@ -3007,38 +3065,59 @@ function Etiqueta({ children }) {
 }
 
 function TarjetaPerfilGuardado({ etiqueta, titulo, descripcion, campos, accionTexto, onAccion, foto }) {
+  const { esOscuro, t } = useUI()
+
   return (
-    <div className="rounded-[28px] border border-cyan-400/20 bg-gradient-to-br from-cyan-500/12 via-slate-900/80 to-slate-950/80 p-5 shadow-2xl shadow-slate-950/20">
+    <div className={`rounded-[28px] border p-5 shadow-2xl ${
+      esOscuro
+        ? 'border-cyan-400/20 bg-gradient-to-br from-cyan-500/12 via-slate-900/80 to-slate-950/80 shadow-slate-950/20'
+        : 'border-cyan-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(238,248,255,0.96))] shadow-cyan-950/10'
+    }`}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl border border-cyan-400/30 bg-slate-950/70">
+          <div className={`flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl border ${
+            esOscuro
+              ? 'border-cyan-400/30 bg-slate-950/70'
+              : 'border-cyan-300/70 bg-cyan-50'
+          }`}>
             {foto ? (
-              <img src={foto} alt="Foto de perfil" className="h-full w-full object-cover" />
+              <img src={foto} alt={t('Foto de perfil', 'Profile picture')} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-2xl font-semibold text-cyan-200">
+              <span className={`text-2xl font-semibold ${esOscuro ? 'text-cyan-200' : 'text-cyan-700'}`}>
                 {String(titulo || 'V').trim().charAt(0).toUpperCase()}
               </span>
             )}
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">{etiqueta}</p>
-            <h4 className="mt-2 text-xl font-semibold text-white">{titulo || 'Perfil actualizado'}</h4>
+            <p className={`text-xs uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{etiqueta}</p>
+            <h4 className={`mt-2 text-xl font-semibold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{titulo || t('Perfil actualizado', 'Updated profile')}</h4>
           </div>
         </div>
         <button
           type="button"
           onClick={onAccion}
-          className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/20"
+          className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${
+            esOscuro
+              ? 'border-cyan-400/30 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20'
+              : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'
+          }`}
         >
           {accionTexto}
         </button>
       </div>
-      <p className="mt-4 text-sm leading-6 text-slate-300">{descripcion}</p>
+      <p className={`mt-4 text-sm leading-6 ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{descripcion}</p>
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         {campos.map((campo) => (
-          <div key={campo.label} className="rounded-2xl border border-white/8 bg-slate-950/50 px-4 py-3">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">{campo.label}</p>
-            <p className="mt-2 text-sm font-medium text-slate-100">{campo.value || 'Pendiente'}</p>
+          <div
+            key={campo.label}
+            className={`rounded-2xl border px-4 py-3 ${
+              esOscuro
+                ? 'border-white/8 bg-slate-950/50'
+                : 'border-slate-200 bg-white/90'
+            }`}
+          >
+            <p className={`text-[11px] uppercase tracking-[0.24em] ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>{campo.label}</p>
+            <p className={`mt-2 text-sm font-medium ${esOscuro ? 'text-slate-100' : 'text-slate-900'}`}>{campo.value || t('Pendiente', 'Pending')}</p>
           </div>
         ))}
       </div>
@@ -3066,7 +3145,7 @@ function ResumenAsignadoSimple({ titulo, vacio, items, render }) {
   return (
     <div className={`rounded-2xl border p-3 ${esOscuro ? 'border-white/8 bg-white/5' : 'border-slate-200/80 bg-white/70'}`}>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">{titulo}</p>
+        <p className={`text-xs uppercase tracking-[0.2em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{titulo}</p>
         <span className={`rounded-full border px-2 py-1 text-[11px] ${esOscuro ? 'border-white/10 bg-slate-950/50 text-slate-300' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
           {items.length}
         </span>
@@ -3131,13 +3210,17 @@ function SelectorDeportistas({
             className={`w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
               esOscuro
                 ? 'border-white/10 bg-slate-950/80 text-white'
-                : 'border-slate-300 bg-white text-slate-900'
+                : 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'
             }`}
           />
           <button
             type="button"
             onClick={onSeleccionarTodos}
-            className="rounded-2xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/18"
+            className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+              esOscuro
+                ? 'border-cyan-400/25 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/18'
+                : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'
+            }`}
           >
             {t('Seleccionar visibles', 'Select visible')}
           </button>
@@ -3147,7 +3230,7 @@ function SelectorDeportistas({
             className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
               esOscuro
                 ? 'border-white/15 text-slate-200 hover:bg-white/5'
-                : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+                : 'border-slate-300 bg-white text-slate-700 shadow-[0_10px_24px_rgba(148,163,184,0.1)] hover:bg-slate-50'
             }`}
           >
             {t('Deseleccionar visibles', 'Deselect visible')}
@@ -3158,11 +3241,15 @@ function SelectorDeportistas({
           <span className={`rounded-full px-3 py-1 ${esOscuro ? 'bg-white/6 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
             {t('Visibles', 'Visible')}: {deportistas.length}
           </span>
-          <span className="rounded-full bg-cyan-400/10 px-3 py-1 text-cyan-100">
+          <span className={`rounded-full px-3 py-1 ${
+            esOscuro
+              ? 'bg-cyan-400/10 text-cyan-100'
+              : 'bg-cyan-100 text-cyan-800'
+          }`}>
             {t('Seleccionados en esta vista', 'Selected in this view')}: {seleccionadosVisibles}
           </span>
           <span className={`rounded-full px-3 py-1 ${esOscuro ? 'bg-white/6 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
-            {t('Seleccion total', 'Total selected')}: {seleccionados.length}
+            {t('Selección total', 'Total selected')}: {seleccionados.length}
           </span>
         </div>
 

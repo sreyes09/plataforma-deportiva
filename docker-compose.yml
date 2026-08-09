@@ -1,0 +1,27 @@
+services:
+  # API principal con autenticacion, panel y acceso a MongoDB Atlas.
+  backend:
+    build:
+      context: ./backend
+    container_name: vyrox-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      PUERTO: 5000
+    ports:
+      - "5000:5000"
+
+  # Frontend compilado y servido por Nginx, usando proxy interno hacia /api.
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+    container_name: vyrox-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"

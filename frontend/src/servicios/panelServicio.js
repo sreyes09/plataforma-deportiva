@@ -1,7 +1,8 @@
 import axios from 'axios'
 
 // Servicio que encapsula todas las operaciones protegidas del tablero.
-const URL_BASE = 'http://localhost:5000/api'
+// Usa la variable publica de Vite cuando exista y, si no, aprovecha el proxy local /api.
+const URL_BASE = `${import.meta.env.VITE_API_URL || '/api'}`
 
 // Recupera el token guardado localmente para autorizar peticiones privadas.
 const obtenerToken = () => localStorage.getItem('token')

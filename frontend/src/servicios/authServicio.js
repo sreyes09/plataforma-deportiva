@@ -1,7 +1,8 @@
 import axios from 'axios'
 
 // Servicio centralizado para todas las operaciones de autenticacion.
-const URL_BASE = 'http://localhost:5000/api'
+// Usa la variable publica de Vite cuando exista y, si no, cae al proxy local /api.
+const URL_BASE = `${import.meta.env.VITE_API_URL || '/api'}`
 
 const authServicio = {
   // Crea una cuenta nueva y devuelve el usuario con su token inicial.
