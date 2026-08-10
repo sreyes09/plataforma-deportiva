@@ -149,9 +149,11 @@ function Tablero() {
     try {
       const respuesta = await panelServicio.actualizar(siguientes)
       setDatos(normalizarPanel(usuario, respuesta))
+      return true
     } catch (error) {
       setDatos(referenciaActual)
       setErrorApi(error.response?.data?.mensaje || 'No se pudieron guardar los cambios.')
+      return false
     } finally {
       setGuardando(false)
     }
@@ -657,8 +659,11 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
 
   const guardarPerfil = async (e) => {
     e.preventDefault()
-    await guardarCambios((actuales) => ({ ...actuales, perfil }))
-    setEditandoPerfil(false)
+    const guardado = await guardarCambios((actuales) => ({ ...actuales, perfil }))
+    if (guardado) {
+      setEditandoPerfil(false)
+      setNombreFotoPerfil('')
+    }
   }
 
   const reiniciarFormularioEstadistica = () => {
@@ -677,6 +682,7 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
     if (!archivo) return
     if (!archivo.type?.startsWith('image/')) return
 
+    setNombreFotoPerfil(archivo.name)
     const lector = new FileReader()
     lector.onload = () => {
       setPerfil((previo) => ({ ...previo, foto: lector.result }))
@@ -913,20 +919,12 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
             <Campo label={t('Equipo', 'Team')} value={perfil.equipo} onChange={(value) => setPerfil({ ...perfil, equipo: value })} />
             <Campo label={t('Objetivo principal', 'Main goal')} value={perfil.objetivoPrincipal} onChange={(value) => setPerfil({ ...perfil, objetivoPrincipal: value })} />
             <div className="md:col-span-2">
-              <Etiqueta>{t('Foto de perfil', 'Profile picture')}</Etiqueta>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => cargarFotoPerfil(e.target.files?.[0])}
-                className={`mt-2 block w-full rounded-2xl border px-4 py-3 text-sm transition ${
-                  esOscuro
-                    ? 'border-white/10 bg-slate-950/70 text-slate-200 file:text-slate-100'
-                    : 'border-slate-300 bg-white text-slate-700 shadow-[0_10px_24px_rgba(148,163,184,0.12)] file:text-slate-700'
-                }`}
+              <SelectorFotoPerfil
+                nombreArchivo={nombreFotoPerfil}
+                fotoActual={perfil.foto}
+                onSeleccionar={cargarFotoPerfil}
+                ayuda={t('Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.', 'You can upload JPG, JPEG, PNG, WEBP, GIF, SVG and other compatible image formats.')}
               />
-              <p className={`mt-2 text-xs ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>
-                {t('Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.', 'You can upload JPG, JPEG, PNG, WEBP, GIF, SVG and other compatible image formats.')}
-              </p>
             </div>
             <div className="md:col-span-2">
               <Etiqueta>{t('Resumen personal', 'Personal summary')}</Etiqueta>
@@ -1427,6 +1425,7 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
   // Reutiliza el guardado base64 para que el admin tambien pueda identificarse visualmente.
   const cargarFotoPerfil = (archivo) => {
     if (!archivo || !archivo.type?.startsWith('image/')) return
+    setNombreFotoPerfil(archivo.name)
     const lector = new FileReader()
     lector.onload = () => {
       setPerfil((previo) => ({ ...previo, foto: lector.result }))
@@ -1465,24 +1464,21 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
           <form
             onSubmit={async (e) => {
               e.preventDefault()
-              await guardarCambios((actuales) => ({ ...actuales, perfil }))
-              setEditandoPerfil(false)
+              const guardado = await guardarCambios((actuales) => ({ ...actuales, perfil }))
+              if (guardado) {
+                setEditandoPerfil(false)
+                setNombreFotoPerfil('')
+              }
             }}
             className="grid gap-4 md:grid-cols-2"
           >
             <Campo label={t('Cargo', 'Role title')} value={perfil.cargo} onChange={(value) => setPerfil({ ...perfil, cargo: value })} />
             <Campo label={t('Área', 'Area')} value={perfil.area} onChange={(value) => setPerfil({ ...perfil, area: value })} />
             <div className="md:col-span-2">
-              <Etiqueta>{t('Foto de perfil', 'Profile picture')}</Etiqueta>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => cargarFotoPerfil(e.target.files?.[0])}
-                className={`mt-2 block w-full rounded-2xl border px-4 py-3 text-sm transition ${
-                  esOscuro
-                    ? 'border-white/10 bg-slate-950/70 text-slate-200 file:text-slate-100'
-                    : 'border-cyan-300 bg-white text-slate-800 shadow-[0_12px_28px_rgba(14,116,144,0.16)] file:rounded-xl file:border-0 file:bg-cyan-600 file:px-4 file:py-2 file:font-medium file:text-white'
-                }`}
+              <SelectorFotoPerfil
+                nombreArchivo={nombreFotoPerfil}
+                fotoActual={perfil.foto}
+                onSeleccionar={cargarFotoPerfil}
               />
             </div>
             <div className="md:col-span-2">
@@ -1819,6 +1815,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
     if (!archivo) return
     if (!archivo.type?.startsWith('image/')) return
 
+    setNombreFotoPerfil(archivo.name)
     const lector = new FileReader()
     lector.onload = () => {
       setPerfil((previo) => ({ ...previo, foto: lector.result }))
@@ -2035,20 +2032,12 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             <Campo label="Categoria" value={perfil.categoria} onChange={(value) => setPerfil({ ...perfil, categoria: value })} />
             <Campo label="Equipo" value={perfil.equipo} onChange={(value) => setPerfil({ ...perfil, equipo: value })} />
             <div className="md:col-span-2">
-              <Etiqueta>{t('Foto de perfil', 'Profile picture')}</Etiqueta>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => cargarFotoPerfil(e.target.files?.[0])}
-                className={`mt-2 block w-full rounded-2xl border px-4 py-3 text-sm transition ${
-                  esOscuro
-                    ? 'border-white/10 bg-slate-950/70 text-slate-200 file:text-slate-100'
-                    : 'border-slate-300 bg-white text-slate-700 shadow-[0_10px_24px_rgba(148,163,184,0.12)] file:text-slate-700'
-                }`}
+              <SelectorFotoPerfil
+                nombreArchivo={nombreFotoPerfil}
+                fotoActual={perfil.foto}
+                onSeleccionar={cargarFotoPerfil}
+                ayuda={t('Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.', 'You can upload JPG, JPEG, PNG, WEBP, GIF, SVG and other compatible image formats.')}
               />
-              <p className={`mt-2 text-xs ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>
-                {t('Puede subir JPG, JPEG, PNG, WEBP, GIF, SVG y cualquier otro formato de imagen compatible.', 'You can upload JPG, JPEG, PNG, WEBP, GIF, SVG and other compatible image formats.')}
-              </p>
             </div>
             <div className="md:col-span-2">
               <Etiqueta>{t('Metodologia', 'Methodology')}</Etiqueta>
@@ -3062,6 +3051,57 @@ function Etiqueta({ children }) {
   const { esOscuro } = useUI()
 
   return <label className={`text-sm font-medium ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{children}</label>
+}
+
+function SelectorFotoPerfil({ nombreArchivo, fotoActual, onSeleccionar, ayuda = '' }) {
+  const { esOscuro, t } = useUI()
+  const inputRef = useRef(null)
+
+  const textoEstado = nombreArchivo
+    ? nombreArchivo
+    : fotoActual
+      ? t('Imagen lista para guardar', 'Image ready to save')
+      : t('A?n no has seleccionado una imagen.', 'You have not selected an image yet.')
+
+  return (
+    <div>
+      <Etiqueta>{t('Foto de perfil', 'Profile picture')}</Etiqueta>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={(e) => onSeleccionar(e.target.files?.[0])}
+        className="hidden"
+      />
+      <div className={`mt-2 flex flex-col gap-3 rounded-3xl border px-4 py-4 ${
+        esOscuro
+          ? 'border-white/10 bg-slate-950/55'
+          : 'border-cyan-200/90 bg-white/92 shadow-[0_14px_30px_rgba(14,116,144,0.1)]'
+      }`}>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#2563eb)] px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(37,99,235,0.28)] transition hover:-translate-y-0.5 hover:brightness-110"
+          >
+            + {fotoActual ? t('Cambiar imagen', 'Change image') : t('Agregar imagen', 'Add image')}
+          </button>
+          <div className={`min-w-[12rem] flex-1 rounded-2xl border px-4 py-3 text-sm ${
+            esOscuro
+              ? 'border-white/10 bg-slate-900/80 text-slate-200'
+              : 'border-slate-200 bg-slate-50 text-slate-700'
+          }`}>
+            {textoEstado}
+          </div>
+        </div>
+        {ayuda ? (
+          <p className={`text-xs ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>
+            {ayuda}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  )
 }
 
 function TarjetaPerfilGuardado({ etiqueta, titulo, descripcion, campos, accionTexto, onAccion, foto }) {

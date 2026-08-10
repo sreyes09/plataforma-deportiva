@@ -14,7 +14,8 @@ const panelRutas = require('./rutas/panelRutas');
 
 // Middleware global para aceptar JSON y permitir la conexion con el frontend.
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // Modulos principales del sistema expuestos como API REST.
 app.use('/api/auth', authRutas);
