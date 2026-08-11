@@ -523,6 +523,13 @@ function Tablero() {
 function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
   const [perfil, setPerfil] = useState(datos.perfil)
   const [editandoPerfil, setEditandoPerfil] = useState(false)
+  const [nombreFotoPerfil, setNombreFotoPerfil] = useState('')
+  const [deportistasSeleccionados, setDeportistasSeleccionados] = useState([])
+  const [sesionesSeleccionadas, setSesionesSeleccionadas] = useState([])
+  const [metasSeleccionadas, setMetasSeleccionadas] = useState([])
+  const [competenciasSeleccionadas, setCompetenciasSeleccionadas] = useState([])
+  const [observacionesSeleccionadas, setObservacionesSeleccionadas] = useState([])
+  const [estadisticasSeleccionadas, setEstadisticasSeleccionadas] = useState([])
   const [nuevaEstadistica, setNuevaEstadistica] = useState({
     fecha: new Date().toISOString().slice(0, 10),
     disciplina: datos.perfil.disciplina || '',
@@ -644,6 +651,7 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
     if (perfilRef.current !== perfilStr) {
       perfilRef.current = perfilStr
       setPerfil(datos.perfil)
+      setNombreFotoPerfil('')
     }
     const metasStr = JSON.stringify(datos.metas)
     if (metasRef.current !== metasStr) {
@@ -976,33 +984,6 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
             onAccion={() => setEditandoPerfil(true)}
           />
         )}
-
-        <div className="hidden">
-          <ResumenAsignadoSimple
-            titulo={t('Metas asignadas', 'Assigned goals')}
-            vacio={t('Aun no tienes metas asignadas.', 'You do not have any assigned goals yet.')}
-            items={datos.metas}
-            render={(meta) => `${limpiarTextoVisual(meta.titulo)} · ${meta.progreso}/${meta.objetivo}`}
-          />
-          <ResumenAsignadoSimple
-            titulo={t('Sesiones asignadas', 'Assigned sessions')}
-            vacio={t('Aun no tienes sesiones asignadas.', 'You do not have any assigned sessions yet.')}
-            items={datos.sesiones}
-            render={(sesion) => `${limpiarTextoVisual(sesion.tipo)} · ${limpiarTextoVisual(sesion.fecha)}`}
-          />
-          <ResumenAsignadoSimple
-            titulo={t('Competencias asignadas', 'Assigned competitions')}
-            vacio={t('Aun no tienes competencias asignadas.', 'You do not have any assigned competitions yet.')}
-            items={datos.competencias}
-            render={(competencia) => `${limpiarTextoVisual(competencia.nombre)} · ${limpiarTextoVisual(competencia.fecha)}`}
-          />
-          <ResumenAsignadoSimple
-            titulo={t('Seguimiento', 'Tracking')}
-            vacio={t('Aun no hay observaciones de tu entrenador.', 'There are no coach observations yet.')}
-            items={datos.observaciones}
-            render={(observacion) => `${observacion.prioridad} - ${observacion.nota}`}
-          />
-        </div>
       </div>
     )
   }
@@ -1135,6 +1116,41 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
               </button>
             </div>
           </div>
+          <div className={`grid gap-3 rounded-2xl border p-4 md:grid-cols-[auto_auto_1fr] ${
+            esOscuro
+              ? 'border-white/8 bg-white/5'
+              : 'border-slate-200 bg-white/90 shadow-[0_12px_24px_rgba(148,163,184,0.08)]'
+          }`}>
+            <button
+              type="button"
+              onClick={seleccionarEstadisticasVisibles}
+              className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                esOscuro
+                  ? 'border-cyan-400/25 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/18'
+                  : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'
+              }`}
+            >
+              {t('Seleccionar visibles', 'Select visible')}
+            </button>
+            <button
+              type="button"
+              onClick={deseleccionarEstadisticasVisibles}
+              className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                esOscuro
+                  ? 'border-white/15 text-slate-200 hover:bg-white/5'
+                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {t('Deseleccionar visibles', 'Deselect visible')}
+            </button>
+            <div className={`rounded-2xl border px-4 py-3 text-sm ${
+              esOscuro
+                ? 'border-white/10 bg-slate-950/60 text-slate-300'
+                : 'border-slate-200 bg-slate-50 text-slate-700'
+            }`}>
+              {t('Seleccionadas', 'Selected')}: <span className="font-semibold">{estadisticasSeleccionadas.length}</span>
+            </div>
+          </div>
           {datos.estadisticas.length === 0 ? (
             <EstadoVacio mensaje={t('Todavía no has registrado estadísticas personales.', 'You have not recorded personal statistics yet.')} />
           ) : estadisticasFiltradas.length === 0 ? (
@@ -1151,13 +1167,22 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
               return (
                 <div
                   key={item.id || `${item.metrica}-${item.disciplina}-${item.competencia}-${item.fecha}-${indiceOriginal}`}
-                  className={`rounded-[26px] border p-5 ${
-                    esOscuro
+                  className={`rounded-[26px] border p-5 ${estadisticasSeleccionadas.includes(indiceOriginal)
+                    ? (esOscuro ? 'border-cyan-400/35 bg-cyan-400/10' : 'border-cyan-300 bg-cyan-50/80')
+                    : (esOscuro
                       ? 'border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(15,23,42,0.64))] shadow-[0_18px_30px_rgba(2,6,23,0.2)]'
-                      : 'border-cyan-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(240,249,255,0.94))] shadow-[0_18px_34px_rgba(14,116,144,0.12)]'
+                      : 'border-cyan-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(240,249,255,0.94))] shadow-[0_18px_34px_rgba(14,116,144,0.12)]')
                   }`}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
+                    <label className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={estadisticasSeleccionadas.includes(indiceOriginal)}
+                        onChange={() => toggleSeleccionEstadistica(indiceOriginal)}
+                        className="mt-1"
+                      />
+                    </label>
                     <div className="space-y-3">
                       <div>
                         <h4 className={`text-xl font-bold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{metricaVisible}</h4>
@@ -1406,6 +1431,7 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
     if (perfilRef.current !== perfilStr) {
       perfilRef.current = perfilStr
       setPerfil(datos.perfil)
+      setNombreFotoPerfil('')
     }
   }, [datos.perfil])
 
@@ -1917,6 +1943,28 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             ? competenciasFiltradas.length
             : observacionesFiltradas.length
 
+  const toggleSeleccionLista = (setter, id) => {
+    setter((previas) => (
+      previas.includes(id)
+        ? previas.filter((item) => item !== id)
+        : [...previas, id]
+    ))
+  }
+
+  const seleccionarIdsVisibles = (setter, ids) => {
+    setter((previas) => Array.from(new Set([...(previas || []), ...ids])))
+  }
+
+  const deseleccionarIdsVisibles = (setter, ids) => {
+    setter((previas) => (previas || []).filter((id) => !ids.includes(id)))
+  }
+
+  const idsDeportistasVisibles = deportistasFiltrados.map((item) => item.id)
+  const idsSesionesVisibles = sesionesFiltradas.map((item) => item.id)
+  const idsMetasVisibles = metasFiltradas.map((item) => item.id)
+  const idsCompetenciasVisibles = competenciasFiltradas.map((item) => item.id)
+  const idsObservacionesVisibles = observacionesFiltradas.map((item) => item.id)
+
   const FiltrosEntrenador = (
     <div className={`mb-6 grid gap-4 rounded-2xl border p-4 md:grid-cols-4 ${
       esOscuro
@@ -2121,19 +2169,39 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
 
         <div className="space-y-4">
           {FiltrosEntrenador}
+          {deportistasFiltrados.length > 0 && (
+            <div className={`grid gap-3 rounded-2xl border p-4 md:grid-cols-[auto_auto_1fr] ${
+              esOscuro
+                ? 'border-white/8 bg-white/5'
+                : 'border-slate-200 bg-white/90 shadow-[0_12px_24px_rgba(148,163,184,0.08)]'
+            }`}>
+              <button type="button" onClick={() => seleccionarIdsVisibles(setDeportistasSeleccionados, idsDeportistasVisibles)} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${esOscuro ? 'border-cyan-400/25 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/18' : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'}`}>{t('Seleccionar visibles', 'Select visible')}</button>
+              <button type="button" onClick={() => deseleccionarIdsVisibles(setDeportistasSeleccionados, idsDeportistasVisibles)} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${esOscuro ? 'border-white/15 text-slate-200 hover:bg-white/5' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}>{t('Deseleccionar visibles', 'Deselect visible')}</button>
+              <div className={`rounded-2xl border px-4 py-3 text-sm ${esOscuro ? 'border-white/10 bg-slate-950/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+                {t('Seleccionados', 'Selected')}: <span className="font-semibold">{deportistasSeleccionados.length}</span>
+              </div>
+            </div>
+          )}
           {deportistasFiltrados.length === 0 ? (
             <EstadoVacio mensaje={t('Aún no tienes deportistas vinculados. Registre primero sus cuentas y luego agréguelos por correo.', 'You do not have linked athletes yet. Register their accounts first and then add them by email.')} />
           ) : (
             deportistasFiltrados.map((deportista) => (
               <div
                 key={deportista.id}
-                className={`rounded-2xl border p-4 ${
-                  esOscuro
-                    ? 'border-white/8 bg-white/5'
-                    : 'border-slate-200/80 bg-white shadow-[0_12px_24px_rgba(148,163,184,0.1)]'
+                className={`rounded-2xl border p-4 ${deportistasSeleccionados.includes(deportista.id)
+                  ? (esOscuro ? 'border-cyan-400/35 bg-cyan-400/10' : 'border-cyan-300 bg-cyan-50/80')
+                  : (esOscuro ? 'border-white/8 bg-white/5' : 'border-slate-200/80 bg-white shadow-[0_12px_24px_rgba(148,163,184,0.1)]')
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={deportistasSeleccionados.includes(deportista.id)}
+                      onChange={() => toggleSeleccionLista(setDeportistasSeleccionados, deportista.id)}
+                      className="mt-1"
+                    />
+                  </label>
                   <div>
                     <h4 className="font-semibold">{deportista.nombre}</h4>
                     <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{deportista.correo}</p>
@@ -2294,6 +2362,10 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         <div>
           {FiltrosEntrenador}
           <ListaEntrenadorAsignaciones
+          seleccionados={sesionesSeleccionadas}
+          onToggleSeleccion={(id) => toggleSeleccionLista(setSesionesSeleccionadas, id)}
+          onSeleccionarTodos={() => seleccionarIdsVisibles(setSesionesSeleccionadas, idsSesionesVisibles)}
+          onDeseleccionarTodos={() => deseleccionarIdsVisibles(setSesionesSeleccionadas, idsSesionesVisibles)}
           titulo={t('Sesiones creadas', 'Created sessions')}
           vacio={t('No hay sesiones creadas todavia.', 'There are no created sessions yet.')}
           items={sesionesFiltradas}
@@ -2663,6 +2735,10 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         <div>
           {FiltrosEntrenador}
           <ListaEntrenadorAsignaciones
+          seleccionados={competenciasSeleccionadas}
+          onToggleSeleccion={(id) => toggleSeleccionLista(setCompetenciasSeleccionadas, id)}
+          onSeleccionarTodos={() => seleccionarIdsVisibles(setCompetenciasSeleccionadas, idsCompetenciasVisibles)}
+          onDeseleccionarTodos={() => deseleccionarIdsVisibles(setCompetenciasSeleccionadas, idsCompetenciasVisibles)}
           titulo={t('Competencias creadas', 'Created competitions')}
           vacio={t('No hay competencias creadas todavia.', 'There are no created competitions yet.')}
           items={competenciasFiltradas}
@@ -2804,6 +2880,10 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
       <div>
         {FiltrosEntrenador}
         <ListaEntrenadorAsignaciones
+        seleccionados={observacionesSeleccionadas}
+        onToggleSeleccion={(id) => toggleSeleccionLista(setObservacionesSeleccionadas, id)}
+        onSeleccionarTodos={() => seleccionarIdsVisibles(setObservacionesSeleccionadas, idsObservacionesVisibles)}
+        onDeseleccionarTodos={() => deseleccionarIdsVisibles(setObservacionesSeleccionadas, idsObservacionesVisibles)}
         titulo={t('Observaciones registradas', 'Saved observations')}
         vacio={t('No hay observaciones registradas todavia.', 'There are no saved observations yet.')}
         items={observacionesFiltradas}
@@ -3343,20 +3423,52 @@ function ListadoAsignaciones({ titulo, vacio, items, renderItem }) {
   )
 }
 
-function ListaEntrenadorAsignaciones({ titulo, vacio, items, renderItem }) {
+function ListaEntrenadorAsignaciones({
+  titulo,
+  vacio,
+  items,
+  renderItem,
+  seleccionados = [],
+  onToggleSeleccion,
+  onSeleccionarTodos,
+  onDeseleccionarTodos,
+}) {
   const { esOscuro, t } = useUI()
+  const seleccionadosVisibles = items.filter((item) => seleccionados.includes(item.id)).length
 
   return (
     <div>
       <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Vista del entrenador', 'Coach view')}</p>
       <h3 className="mt-2 text-2xl font-semibold">{titulo}</h3>
+      {onToggleSeleccion && items.length > 0 && (
+        <div className={`mt-6 grid gap-3 rounded-2xl border p-4 md:grid-cols-[auto_auto_1fr] ${
+          esOscuro
+            ? 'border-white/8 bg-white/5'
+            : 'border-slate-200 bg-white/90 shadow-[0_12px_24px_rgba(148,163,184,0.08)]'
+        }`}>
+          <button type="button" onClick={onSeleccionarTodos} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${esOscuro ? 'border-cyan-400/25 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/18' : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'}`}>
+            {t('Seleccionar visibles', 'Select visible')}
+          </button>
+          <button type="button" onClick={onDeseleccionarTodos} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${esOscuro ? 'border-white/15 text-slate-200 hover:bg-white/5' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}>
+            {t('Deseleccionar visibles', 'Deselect visible')}
+          </button>
+          <div className={`rounded-2xl border px-4 py-3 text-sm ${esOscuro ? 'border-white/10 bg-slate-950/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
+            {t('Seleccionadas en esta vista', 'Selected in this view')}: <span className="font-semibold">{seleccionadosVisibles}</span> ? {t('Total', 'Total')}: <span className="font-semibold">{seleccionados.length}</span>
+          </div>
+        </div>
+      )}
       <div className="mt-6 space-y-4">
         {items.length === 0 ? (
           <EstadoVacio mensaje={vacio} />
         ) : (
           items.map((item) => (
-            <div key={item.id} className={`flex flex-wrap items-start justify-between gap-4 rounded-2xl border p-4 ${esOscuro ? 'border-white/8 bg-white/5' : 'border-slate-200/80 bg-white/78'}`}>
-              {renderItem(item)}
+            <div key={item.id} className={`flex flex-wrap items-start justify-between gap-4 rounded-2xl border p-4 ${onToggleSeleccion && seleccionados.includes(item.id) ? (esOscuro ? 'border-cyan-400/35 bg-cyan-400/10' : 'border-cyan-300 bg-cyan-50/80') : (esOscuro ? 'border-white/8 bg-white/5' : 'border-slate-200/80 bg-white/78')}`}>
+              {onToggleSeleccion ? (
+                <div className="flex w-full items-start gap-3">
+                  <input type="checkbox" checked={seleccionados.includes(item.id)} onChange={() => onToggleSeleccion(item.id)} className="mt-1" />
+                  <div className="flex-1">{renderItem(item)}</div>
+                </div>
+              ) : renderItem(item)}
             </div>
           ))
         )}
