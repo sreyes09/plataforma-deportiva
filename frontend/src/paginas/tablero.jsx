@@ -35,6 +35,7 @@ import {
   obtenerResumenEntrenador,
 } from '../utils/plataformaDatos'
 import panelServicio from '../servicios/panelServicio'
+import { exportarReporteExcel, exportarReportePdf } from '../utils/exportadoresReporte'
 
 // Paleta visual reutilizada por los graficos del tablero.
 const coloresGrafico = ['#22d3ee', '#f59e0b', '#38bdf8', '#fb7185']
@@ -138,6 +139,20 @@ function Tablero() {
   const manejarCerrarSesion = () => {
     cerrarSesion()
     navegar('/')
+  }
+
+  // Genera el reporte del rol actual y lo descarga en Excel o PDF.
+  const manejarExportacion = (tipo) => {
+    try {
+      const contexto = { usuario, rolUsuario, datos, contenido, idioma, t }
+      if (tipo === 'excel') {
+        exportarReporteExcel(contexto)
+        return
+      }
+      exportarReportePdf(contexto)
+    } catch (error) {
+      setErrorApi(t('No se pudo generar el reporte.', 'The report could not be generated.'))
+    }
   }
 
   // Aplica cambios al estado local y luego los sincroniza con la API.
@@ -340,6 +355,22 @@ function Tablero() {
                     : t('Administrador', 'Administrator')}
               </p>
             </div>
+            <BotonSecundario
+              onClick={() => manejarExportacion('excel')}
+              className={esOscuro
+                ? 'border-emerald-400/35 bg-emerald-500/12 text-emerald-100 hover:bg-emerald-500/18'
+                : 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}
+            >
+              {t('Exportar Excel', 'Export Excel')}
+            </BotonSecundario>
+            <BotonSecundario
+              onClick={() => manejarExportacion('pdf')}
+              className={esOscuro
+                ? 'border-cyan-400/35 bg-cyan-500/12 text-cyan-100 hover:bg-cyan-500/18'
+                : 'border-cyan-300 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'}
+            >
+              {t('Exportar PDF', 'Export PDF')}
+            </BotonSecundario>
             <BotonSecundario
               onClick={manejarCerrarSesion}
               className="border-rose-400/35 bg-rose-500/12 text-rose-100 hover:bg-rose-500/18"
