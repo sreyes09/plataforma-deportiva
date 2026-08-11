@@ -106,7 +106,7 @@ function Tablero() {
     rolUsuario === 'entrenador'
       ? 'deportistas'
       : rolUsuario === 'administrador'
-        ? 'usuarios'
+        ? 'supervision'
         : 'perfil'
   )
 
@@ -1454,6 +1454,19 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
       return coincideRol && coincideEstado && coincideBusqueda
     })
   ), [busquedaUsuarios, datos.usuarios, filtroEstadoAdmin, filtroRolAdmin])
+
+  const resumenAdmin = datos.resumenAdmin || {}
+  const actividadDestacada = (datos.actividadAdmin || []).slice(0, 6)
+  const usuariosRecientes = [...(datos.usuarios || [])]
+    .sort((a, b) => new Date(b.fechaRegistro || 0) - new Date(a.fechaRegistro || 0))
+    .slice(0, 5)
+  const distribucionRoles = [
+    { id: 'deportista', nombre: t('Deportistas', 'Athletes'), valor: resumenAdmin.deportistas || 0, tono: esOscuro ? 'bg-cyan-400/15 text-cyan-200' : 'border border-cyan-300 bg-white text-cyan-800' },
+    { id: 'entrenador', nombre: t('Entrenadores', 'Coaches'), valor: resumenAdmin.entrenadores || 0, tono: esOscuro ? 'bg-violet-400/15 text-violet-200' : 'border border-violet-300 bg-white text-violet-800' },
+    { id: 'administrador', nombre: t('Administradores', 'Administrators'), valor: resumenAdmin.administradores || 0, tono: esOscuro ? 'bg-amber-400/15 text-amber-200' : 'border border-amber-300 bg-white text-amber-800' },
+  ]
+  const totalRoles = distribucionRoles.reduce((acum, item) => acum + item.valor, 0)
+  const tasaActivos = resumenAdmin.usuarios ? Math.round(((resumenAdmin.activos || 0) / resumenAdmin.usuarios) * 100) : 0
 
   // Reutiliza el guardado base64 para que el admin tambien pueda identificarse visualmente.
   const cargarFotoPerfil = (archivo) => {
