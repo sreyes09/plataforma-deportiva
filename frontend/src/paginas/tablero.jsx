@@ -25,6 +25,8 @@ import {
   construirRankingDeportista,
   construirResumenCoach,
   construirSerieDeportista,
+  construirSerieEstadisticasDeportista,
+  construirSerieEstadisticasEntrenador,
   crearPanelVacio,
   normalizarPanel,
   obtenerResumenAdministrador,
@@ -234,18 +236,21 @@ function Tablero() {
 
     if (rolUsuario === 'entrenador') {
       const distribucion = construirPorcentajeMetasEntrenador(datos)
+      const serieGrupo = construirSerieEstadisticasEntrenador(datos)
       return {
         resumen: obtenerResumenEntrenador(datos),
-        seriePrincipal: construirResumenCoach(datos),
+        seriePrincipal: serieGrupo.datos,
+        lineasPrincipal: serieGrupo.lineas,
         serieSecundaria: distribucion.series,
         graficoPrincipal: {
           etiqueta: t('Vista del grupo', 'Group view'),
-          titulo: t('Avance de metas por deportista vinculado', 'Goal progress by linked athlete'),
+          titulo: t('Evolución de estadísticas del grupo', 'Team statistics evolution'),
           valorKey: 'valor',
           detalleKey: 'detalle',
-          nombreValor: t('Progreso', 'Progress'),
-          sufijoValor: '%',
-          limitePorcentaje: true,
+          nombreValor: t('Valor', 'Value'),
+          sufijoValor: '',
+          limitePorcentaje: false,
+          tipo: 'lineas',
         },
         graficoSecundario: {
           etiqueta: t('Estado general', 'Overall status'),
@@ -258,18 +263,21 @@ function Tablero() {
     }
 
     const distribucion = construirPorcentajeMetasDeportista(datos)
+    const serieEstadisticas = construirSerieEstadisticasDeportista(datos)
     return {
       resumen: obtenerResumenDeportista(datos),
-      seriePrincipal: construirSerieDeportista(datos),
+      seriePrincipal: serieEstadisticas.datos,
+      lineasPrincipal: serieEstadisticas.lineas,
       serieSecundaria: distribucion.series,
       graficoPrincipal: {
         etiqueta: t('Rendimiento individual', 'Individual performance'),
-        titulo: datos.metas.length > 0 ? t('Porcentaje de avance por meta', 'Goal progress percentage') : t('Evolución de estadísticas', 'Statistics evolution'),
+        titulo: t('Evolución de estadísticas', 'Statistics evolution'),
         valorKey: 'valor',
         detalleKey: 'detalle',
-        nombreValor: datos.metas.length > 0 ? t('Progreso', 'Progress') : t('Valor', 'Value'),
-        sufijoValor: datos.metas.length > 0 ? '%' : '',
-        limitePorcentaje: datos.metas.length > 0,
+        nombreValor: t('Valor', 'Value'),
+        sufijoValor: '',
+        limitePorcentaje: false,
+        tipo: 'lineas',
       },
       graficoSecundario: {
         etiqueta: t('Cumplimiento personal', 'Personal completion'),
@@ -391,6 +399,31 @@ function Tablero() {
             <div className="h-64">
               {contenido.seriePrincipal.length === 0 ? (
                 <EstadoVacio mensaje={t('Todavia no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
+              ) : contenido.graficoPrincipal.tipo === 'lineas' ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={contenido.seriePrincipal}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="etiqueta" stroke="#cbd5e1" />
+                    <YAxis
+                      stroke="#cbd5e1"
+                      domain={contenido.graficoPrincipal.limitePorcentaje ? [0, 100] : ['auto', 'auto']}
+                      allowDecimals={false}
+                    />
+                    <Tooltip />
+                    {(contenido.lineasPrincipal || []).map((linea) => (
+                      <Line
+                        key={linea.key}
+                        type="monotone"
+                        dataKey={linea.key}
+                        name={linea.nombre}
+                        stroke={linea.color}
+                        strokeWidth={3}
+                        dot={{ r: 4, strokeWidth: 0, fill: linea.color }}
+                        activeDot={{ r: 6, strokeWidth: 0, fill: linea.color }}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={contenido.seriePrincipal}>
@@ -1350,17 +1383,19 @@ const eliminarEstadisticasSeleccionadas = async () => {
     )
   }
 
+  const logrosVisibles = deduplicarLogros(datos.logros)
+
   return (
     <div>
       <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Reconocimientos', 'Recognitions')}</p>
       <h3 className="mt-2 text-2xl font-semibold">{t('Logros del deportista', 'Athlete achievements')}</h3>
-      {datos.logros.length === 0 && ranking.length === 0 ? (
+      {logrosVisibles.length === 0 && ranking.length === 0 ? (
         <div className="mt-6">
           <EstadoVacio mensaje={t('Tus logros apareceran aqui cuando completes metas o acumules avances relevantes.', 'Your achievements will appear here when you complete goals or accumulate meaningful progress.')} />
         </div>
       ) : (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {datos.logros.map((logro) => {
+          {logrosVisibles.map((logro) => {
             const badge = obtenerBadgeLogro(logro)
 
             return (
@@ -1372,7 +1407,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
               >
                 <div className="flex items-start gap-4">
                   <div className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl shadow-[0_12px_24px_rgba(15,23,42,0.18)] ${badge.fondo}`}>
-                    <span aria-hidden="true">{badge.icono}</span>
+                    <BadgeLogroIcon variante={badge.variante} />
                   </div>
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -1383,8 +1418,8 @@ const eliminarEstadisticasSeleccionadas = async () => {
                         {limpiarTextoVisual(logro.nivel || t('Logro', 'Achievement'))}
                       </span>
                     </div>
-                    <h4 className="mt-3 text-xl font-semibold">{logro.titulo}</h4>
-                    <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{logro.descripcion}</p>
+                    <h4 className="mt-3 text-xl font-semibold">{limpiarTextoVisual(logro.titulo)}</h4>
+                    <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{limpiarTextoVisual(logro.descripcion)}</p>
                   </div>
                 </div>
               </div>
@@ -3246,6 +3281,60 @@ function EstadoVacio({ mensaje }) {
   )
 }
 
+function deduplicarLogros(logros = []) {
+  const vistos = new Set()
+  return (logros || []).filter((logro) => {
+    const llave = [
+      limpiarTextoVisual(logro?.titulo || ''),
+      limpiarTextoVisual(logro?.descripcion || ''),
+      limpiarTextoVisual(logro?.nivel || ''),
+    ].join('|').toLowerCase()
+
+    if (!llave) return true
+    if (vistos.has(llave)) return false
+    vistos.add(llave)
+    return true
+  })
+}
+
+function BadgeLogroIcon({ variante }) {
+  if (variante === 'diamante') {
+    return (
+      <svg viewBox="0 0 64 64" className="h-9 w-9" fill="none" aria-hidden="true">
+        <path d="M16 24 28 12h8l12 12-16 24-16-24Z" fill="currentColor" opacity="0.95" />
+        <path d="M24 24h16" stroke="rgba(255,255,255,0.45)" strokeWidth="3" strokeLinecap="round" />
+      </svg>
+    )
+  }
+
+  if (variante === 'oro') {
+    return (
+      <svg viewBox="0 0 64 64" className="h-9 w-9" fill="none" aria-hidden="true">
+        <circle cx="32" cy="28" r="14" fill="currentColor" opacity="0.92" />
+        <path d="M24 42h16M28 48h8" stroke="rgba(15,23,42,0.45)" strokeWidth="4" strokeLinecap="round" />
+        <path d="M19 18h-5c0 7 3 12 10 13M45 18h5c0 7-3 12-10 13" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+
+  if (variante === 'meta') {
+    return (
+      <svg viewBox="0 0 64 64" className="h-9 w-9" fill="none" aria-hidden="true">
+        <circle cx="32" cy="32" r="17" stroke="currentColor" strokeWidth="5" opacity="0.95" />
+        <circle cx="32" cy="32" r="8" stroke="rgba(255,255,255,0.55)" strokeWidth="5" />
+        <circle cx="32" cy="32" r="3.5" fill="currentColor" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg viewBox="0 0 64 64" className="h-9 w-9" fill="none" aria-hidden="true">
+      <path d="M20 18h24v10c0 9-5 15-12 18-7-3-12-9-12-18V18Z" fill="currentColor" opacity="0.92" />
+      <path d="M32 26v12M26 32h12" stroke="rgba(255,255,255,0.55)" strokeWidth="4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 // Asigna un badge visual legible a cada logro para reforzar el reconocimiento del deportista.
 function obtenerBadgeLogro(logro) {
   const nivel = limpiarTextoVisual(logro?.nivel || '').toLowerCase()
@@ -3254,7 +3343,7 @@ function obtenerBadgeLogro(logro) {
   if (titulo.includes('meta completada') || titulo.includes('completed goal')) {
     return {
       nombre: 'Meta cumplida',
-      icono: '??',
+      variante: 'meta',
       fondo: 'bg-[linear-gradient(135deg,#22d3ee,#2563eb)] text-white',
       etiqueta: 'bg-cyan-400/12 text-cyan-200',
     }
@@ -3263,7 +3352,7 @@ function obtenerBadgeLogro(logro) {
   if (nivel.includes('diamante')) {
     return {
       nombre: 'Diamante',
-      icono: '??',
+      variante: 'diamante',
       fondo: 'bg-[linear-gradient(135deg,#60a5fa,#7c3aed)] text-white',
       etiqueta: 'bg-violet-400/12 text-violet-200',
     }
@@ -3272,24 +3361,15 @@ function obtenerBadgeLogro(logro) {
   if (nivel.includes('oro')) {
     return {
       nombre: 'Oro',
-      icono: '??',
+      variante: 'oro',
       fondo: 'bg-[linear-gradient(135deg,#fbbf24,#f59e0b)] text-slate-950',
       etiqueta: 'bg-amber-400/12 text-amber-200',
     }
   }
 
-  if (nivel.includes('plata')) {
-    return {
-      nombre: 'Plata',
-      icono: '??',
-      fondo: 'bg-[linear-gradient(135deg,#e2e8f0,#94a3b8)] text-slate-950',
-      etiqueta: 'bg-slate-400/12 text-slate-200',
-    }
-  }
-
   return {
     nombre: 'Reconocimiento',
-    icono: '?',
+    variante: 'general',
     fondo: 'bg-[linear-gradient(135deg,#f59e0b,#f97316)] text-white',
     etiqueta: 'bg-orange-400/12 text-orange-200',
   }
