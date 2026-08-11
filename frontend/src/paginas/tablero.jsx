@@ -23,8 +23,8 @@ import {
   construirPorcentajeMetasDeportista,
   construirPorcentajeMetasEntrenador,
   construirRankingDeportista,
-  construirResumenCoach,
-  construirSerieDeportista,
+  construirSerieEstadisticasDeportista,
+  construirSerieEstadisticasEntrenador,
   crearPanelVacio,
   normalizarPanel,
   obtenerResumenAdministrador,
@@ -74,6 +74,42 @@ const construirSegmentosLineales = (serie = [], valorKey = 'valor') => {
 }
 
 function GraficoLinealColorido({ serie, grafico }) {
+  const lineas = Array.isArray(grafico?.lineas) ? grafico.lineas : []
+
+  if (lineas.length > 0) {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={serie} margin={{ top: 10, right: 18, left: 0, bottom: 8 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+          <XAxis dataKey="etiqueta" stroke="#cbd5e1" />
+          <YAxis
+            stroke="#cbd5e1"
+            domain={grafico.limitePorcentaje ? [0, 100] : ['auto', 'auto']}
+            allowDecimals={false}
+          />
+          <Tooltip
+            formatter={(valor, nombre) => [`${valor}${grafico.sufijoValor || ''}`, nombre]}
+            labelFormatter={(label) => label}
+          />
+          {lineas.map((linea) => (
+            <Line
+              key={linea.key}
+              type="monotone"
+              dataKey={linea.key}
+              name={linea.nombre}
+              stroke={linea.color}
+              strokeWidth={3}
+              dot={{ r: 4, fill: linea.color, stroke: '#0f172a', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: linea.color, stroke: '#e2e8f0', strokeWidth: 2 }}
+              connectNulls
+              isAnimationActive={false}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    )
+  }
+
   const { datos, segmentos } = construirSegmentosLineales(serie, grafico.valorKey)
 
   return (

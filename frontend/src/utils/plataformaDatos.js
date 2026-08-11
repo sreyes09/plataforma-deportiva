@@ -227,18 +227,82 @@ export const obtenerResumenAdministrador = (datos) => ({
   competencias: datos.resumenAdmin?.competencias || 0,
 })
 
-export const construirSerieDeportista = (datos) =>
-  (datos.metas.length > 0
-    ? datos.metas.map((meta) => ({
-        etiqueta: recortarEtiqueta(meta.titulo, 16),
-        valor: convertirPorcentaje(meta.progreso, meta.objetivo),
-        detalle: `${convertirNumero(meta.progreso)}/${convertirNumero(meta.objetivo)}`,
-      }))
-    : ordenarPorFecha(datos.estadisticas, (item) => item.fecha).slice(-6).map((item) => ({
-        etiqueta: formatearFecha(item.fecha),
-        valor: convertirNumero(item.valor),
-        detalle: item.metrica || item.disciplina || 'Registro',
-      })))
+const coloresSerieTiempo = ['#22d3ee', '#f59e0b', '#38bdf8', '#fb7185', '#34d399', '#a78bfa']
+
+const construirClaveSerie = (texto = '', indice = 0) => {
+  const base = String(texto || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  return base || `serie_${indice + 1}`
+}
+
+const construirSerieTemporalAcumulada = (registros = [], selectorSerie, selectorValor = (item) => item.valor) => {
+  const ordenados = ordenarPorFecha(registros, (item) => item.fecha).filter((item) => obtenerFechaSegura(item.fecha))
+
+  if (ordenados.length === 0) {
+    return { datos: [], lineas: [] }
+  }
+
+  const series = new Map()
+  const incrementosPorDia = new Map()
+
+  ordenados.forEach((item) => {
+    const fecha = obtenerFechaSegura(item.fecha)
+    if (!fecha) return
+
+    const nombreSerie = recortarEtiqueta(selectorSerie(item) || 'Registro', 20)
+    const claveSerie = construirClaveSerie(nombreSerie, series.size)
+
+    if (!series.has(claveSerie)) {
+      series.set(claveSerie, {
+        key: claveSerie,
+        nombre: nombreSerie,
+        color: coloresSerieTiempo[series.size % coloresSerieTiempo.length],
+      })
+    }
+
+    const dia = fecha.toISOString().slice(0, 10)
+    if (!incrementosPorDia.has(dia)) {
+      incrementosPorDia.set(dia, { fecha, valores: new Map() })
+    }
+
+    const bucket = incrementosPorDia.get(dia).valores
+    bucket.set(claveSerie, (bucket.get(claveSerie) || 0) + convertirNumero(selectorValor(item)))
+  })
+
+  const lineas = Array.from(series.values())
+  const acumulados = new Map(lineas.map((linea) => [linea.key, 0]))
+
+  const datos = Array.from(incrementosPorDia.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([dia, info]) => {
+      const fila = {
+        fecha: dia,
+        etiqueta: formatearFecha(info.fecha),
+      }
+
+      lineas.forEach((linea) => {
+        const siguienteValor = (acumulados.get(linea.key) || 0) + (info.valores.get(linea.key) || 0)
+        acumulados.set(linea.key, siguienteValor)
+        fila[linea.key] = siguienteValor
+      })
+
+      return fila
+    })
+
+  return { datos, lineas }
+}
+
+export const construirSerieEstadisticasDeportista = (datos) =>
+  construirSerieTemporalAcumulada(
+    datos.estadisticas || [],
+    (item) => item.metrica || item.disciplina || 'Registro',
+    (item) => item.valor,
+  )
 
 export const construirPorcentajeMetasDeportista = (datos) => {
   const total = datos.metas.length
@@ -275,25 +339,20 @@ export const construirDistribucionMetas = (datos) => {
   ]
 }
 
-export const construirResumenCoach = (datos) =>
-  datos.deportistas.map((deportista) => {
-    const asignaciones = datos.metas.flatMap((meta) =>
-      (meta.asignaciones || []).filter((asignacion) => asignacion.deportistaId === deportista.id)
-    )
+export const construirSerieEstadisticasEntrenador = (datos) => {
+  const registrosGrupo = (datos.deportistas || []).flatMap((deportista) =>
+    (deportista.estadisticas || []).map((estadistica) => ({
+      ...estadistica,
+      deportista: construirNombreVisible(deportista.nombre),
+    }))
+  )
 
-    const progreso = asignaciones.reduce((total, asignacion) => total + convertirNumero(asignacion.progreso), 0)
-    const objetivo = asignaciones.reduce((total, asignacion) => total + convertirNumero(asignacion.objetivo), 0)
-    const porcentaje = objetivo > 0 ? Math.min(Math.round((progreso / objetivo) * 100), 100) : 0
-
-    return {
-      etiqueta: recortarEtiqueta(deportista.nombre.split(' ')[0], 12),
-      valor: porcentaje,
-      progreso,
-      objetivo,
-      metas: asignaciones.length,
-      detalle: `${progreso}/${objetivo || 0} en ${asignaciones.length} metas`,
-    }
-  })
+  return construirSerieTemporalAcumulada(
+    registrosGrupo,
+    (item) => item.deportista || 'Deportista',
+    (item) => item.valor,
+  )
+}
 
 export const construirPorcentajeMetasEntrenador = (datos) => {
   const deportistas = datos.deportistas || []

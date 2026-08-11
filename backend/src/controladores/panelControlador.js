@@ -564,6 +564,16 @@ const normalizarPanelEntrenador = async (panel) => {
         ...mapearDeportista(item),
         disciplina: panelDeportista?.perfil?.disciplina || item.disciplina || '',
         progreso: panelDeportista?.estadisticas?.length || item.progreso || 0,
+        estadisticas: Array.isArray(panelDeportista?.estadisticas)
+          ? panelDeportista.estadisticas.map((estadistica) => ({
+              id: estadistica._id?.toString?.() || '',
+              fecha: estadistica.fecha || '',
+              disciplina: estadistica.disciplina || '',
+              metrica: estadistica.metrica || '',
+              valor: estadistica.valor || 0,
+              competencia: estadistica.competencia || '',
+            }))
+          : [],
       };
     })
       .filter(Boolean),
