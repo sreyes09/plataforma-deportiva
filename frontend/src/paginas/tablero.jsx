@@ -91,7 +91,7 @@ const crearModulosEntrenador = (t) => [
 // Vista del administrador para supervisar usuarios y el estado general de la plataforma.
 const crearModulosAdministrador = (t) => [
   { id: 'perfil', titulo: t('Perfil del administrador', 'Administrator profile'), descripcion: t('Gestiona tu ficha institucional dentro de Vyrox.', 'Manage your institutional profile inside Vyrox.') },
-  { id: 'usuarios', titulo: t('Usuarios inscritos', 'Registered users'), descripcion: t('Revisa deportistas, entrenadores y administradores registrados.', 'Review registered athletes, coaches, and administrators.') },
+  { id: 'usuarios', titulo: t('Usuarios inscritos', 'Registered users'), descripcion: t('Revisa deportistas y entrenadores registrados.', 'Review registered athletes and coaches.') },
   { id: 'supervision', titulo: t('Supervisión general', 'General oversight'), descripcion: t('Consulta actividad, volumen y comportamiento global de la plataforma.', 'Review platform-wide activity, volume, and behavior.') },
 ]
 
@@ -420,6 +420,7 @@ function Tablero() {
           )}
         </section>
 
+        {!esAdministrador && (
         <section className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <Panel className="min-h-80">
             <div className="mb-6">
@@ -512,14 +513,15 @@ function Tablero() {
                 </ResponsiveContainer>
               )}
             </div>
-            <div className="mt-4 flex items-center justify-between gap-4 text-sm text-slate-300">
+            <div className={`mt-4 flex items-center justify-between gap-4 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
               <p>{contenido.graficoSecundario.total} {t('elementos evaluados', 'items evaluated')}</p>
-              <div className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 font-semibold text-cyan-100">
+              <div className={`rounded-full border px-4 py-2 font-semibold ${esOscuro ? 'border-cyan-400/30 bg-cyan-400/10 text-cyan-100' : 'border-cyan-400 bg-cyan-100 text-cyan-900 shadow-[0_10px_24px_rgba(34,211,238,0.18)]'}`}>
                 {contenido.graficoSecundario.porcentajeCentro}% {t('completado', 'completed')}
               </div>
             </div>
           </Panel>
         </section>
+        )}
 
         <section className="mt-8">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -1483,7 +1485,9 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
   }, [datos.perfil])
 
   const usuariosFiltrados = useMemo(() => (
-    (datos.usuarios || []).filter((item) => {
+    (datos.usuarios || [])
+      .filter((item) => item.rol === 'deportista' || item.rol === 'entrenador')
+      .filter((item) => {
       const coincideRol = !filtroRolAdmin || item.rol === filtroRolAdmin
       const coincideEstado = !filtroEstadoAdmin || item.estado === filtroEstadoAdmin
       const coincideBusqueda =
@@ -1521,13 +1525,13 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
             <ResumenAsignadoSimple
               titulo={t('Usuarios activos', 'Active users')}
               vacio={t('Aún no hay usuarios activos para mostrar.', 'There are no active users to show yet.')}
-              items={(datos.usuarios || []).filter((item) => item.estado === 'activo').slice(0, 4)}
+              items={(datos.usuarios || []).filter((item) => (item.rol === 'deportista' || item.rol === 'entrenador') && item.estado === 'activo').slice(0, 4)}
               render={(item) => `${item.nombreCompleto} · ${item.rol}`}
             />
             <ResumenAsignadoSimple
               titulo={t('Actividad reciente', 'Recent activity')}
               vacio={t('Aún no hay actividad suficiente para mostrar.', 'There is not enough activity to show yet.')}
-              items={(datos.actividadAdmin || []).slice(0, 4)}
+              items={(datos.actividadAdmin || []).filter((item) => item.rol === 'deportista' || item.rol === 'entrenador').slice(0, 4)}
               render={(item) => `${item.nombreCompleto} · ${item.resumen?.estadisticas || 0} stats`}
             />
           </div>
@@ -1637,7 +1641,6 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
               <option value="">{t('Todos', 'All')}</option>
               <option value="deportista">{t('Deportista', 'Athlete')}</option>
               <option value="entrenador">{t('Entrenador', 'Coach')}</option>
-              <option value="administrador">{t('Administrador', 'Administrator')}</option>
             </select>
           </div>
           <div>
@@ -2017,6 +2020,50 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
   const idsMetasVisibles = metasFiltradas.map((item) => item.id)
   const idsCompetenciasVisibles = competenciasFiltradas.map((item) => item.id)
   const idsObservacionesVisibles = observacionesFiltradas.map((item) => item.id)
+
+  const eliminarSesionesSeleccionadas = async () => {
+    if (!sesionesSeleccionadas.length) return
+    const idsSeleccionados = new Set(sesionesSeleccionadas)
+    await guardarCambios((actuales) => ({
+      ...actuales,
+      sesiones: actuales.sesiones.filter((item) => !idsSeleccionados.has(item.id)),
+    }))
+    if (edicionSesionId && idsSeleccionados.has(edicionSesionId)) resetSesion()
+    setSesionesSeleccionadas([])
+  }
+
+  const eliminarMetasSeleccionadas = async () => {
+    if (!metasSeleccionadas.length) return
+    const idsSeleccionados = new Set(metasSeleccionadas)
+    await guardarCambios((actuales) => ({
+      ...actuales,
+      metas: actuales.metas.filter((item) => !idsSeleccionados.has(item.id)),
+    }))
+    if (edicionMetaId && idsSeleccionados.has(edicionMetaId)) resetMeta()
+    setMetasSeleccionadas([])
+  }
+
+  const eliminarCompetenciasSeleccionadas = async () => {
+    if (!competenciasSeleccionadas.length) return
+    const idsSeleccionados = new Set(competenciasSeleccionadas)
+    await guardarCambios((actuales) => ({
+      ...actuales,
+      competencias: actuales.competencias.filter((item) => !idsSeleccionados.has(item.id)),
+    }))
+    if (edicionCompetenciaId && idsSeleccionados.has(edicionCompetenciaId)) resetCompetencia()
+    setCompetenciasSeleccionadas([])
+  }
+
+  const eliminarObservacionesSeleccionadas = async () => {
+    if (!observacionesSeleccionadas.length) return
+    const idsSeleccionados = new Set(observacionesSeleccionadas)
+    await guardarCambios((actuales) => ({
+      ...actuales,
+      observaciones: actuales.observaciones.filter((item) => !idsSeleccionados.has(item.id)),
+    }))
+    if (edicionObservacionId && idsSeleccionados.has(edicionObservacionId)) resetObservacion()
+    setObservacionesSeleccionadas([])
+  }
 
   const FiltrosEntrenador = (
     <div className={`mb-6 grid gap-4 rounded-2xl border p-4 md:grid-cols-4 ${
@@ -2419,6 +2466,22 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           onToggleSeleccion={(id) => toggleSeleccionLista(setSesionesSeleccionadas, id)}
           onSeleccionarTodos={() => seleccionarIdsVisibles(setSesionesSeleccionadas, idsSesionesVisibles)}
           onDeseleccionarTodos={() => deseleccionarIdsVisibles(setSesionesSeleccionadas, idsSesionesVisibles)}
+          accionesCabecera={(
+            <button
+              type="button"
+              onClick={eliminarSesionesSeleccionadas}
+              disabled={!sesionesSeleccionadas.length}
+              className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${sesionesSeleccionadas.length
+                ? (esOscuro
+                    ? 'border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22'
+                    : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
+                : (esOscuro
+                    ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
+                    : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+            >
+              {t('Eliminar seleccionadas', 'Delete selected')}
+            </button>
+          )}
           titulo={t('Sesiones creadas', 'Created sessions')}
           vacio={t('No hay sesiones creadas todavia.', 'There are no created sessions yet.')}
           items={sesionesFiltradas}
@@ -2636,8 +2699,28 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         <div>
           {FiltrosEntrenador}
           <ListaEntrenadorAsignaciones
-          titulo="Metas creadas"
-          vacio="No hay metas asignadas todavia."
+          seleccionados={metasSeleccionadas}
+          onToggleSeleccion={(id) => toggleSeleccionLista(setMetasSeleccionadas, id)}
+          onSeleccionarTodos={() => seleccionarIdsVisibles(setMetasSeleccionadas, idsMetasVisibles)}
+          onDeseleccionarTodos={() => deseleccionarIdsVisibles(setMetasSeleccionadas, idsMetasVisibles)}
+          accionesCabecera={(
+            <button
+              type="button"
+              onClick={eliminarMetasSeleccionadas}
+              disabled={!metasSeleccionadas.length}
+              className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${metasSeleccionadas.length
+                ? (esOscuro
+                    ? 'border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22'
+                    : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
+                : (esOscuro
+                    ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
+                    : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+            >
+              {t('Eliminar seleccionadas', 'Delete selected')}
+            </button>
+          )}
+          titulo={t('Metas creadas', 'Created goals')}
+          vacio={t('No hay metas asignadas todavia.', 'There are no assigned goals yet.')}
           items={metasFiltradas}
           renderItem={(meta) => (
             <div className="w-full">
@@ -2792,6 +2875,22 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           onToggleSeleccion={(id) => toggleSeleccionLista(setCompetenciasSeleccionadas, id)}
           onSeleccionarTodos={() => seleccionarIdsVisibles(setCompetenciasSeleccionadas, idsCompetenciasVisibles)}
           onDeseleccionarTodos={() => deseleccionarIdsVisibles(setCompetenciasSeleccionadas, idsCompetenciasVisibles)}
+          accionesCabecera={(
+            <button
+              type="button"
+              onClick={eliminarCompetenciasSeleccionadas}
+              disabled={!competenciasSeleccionadas.length}
+              className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${competenciasSeleccionadas.length
+                ? (esOscuro
+                    ? 'border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22'
+                    : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
+                : (esOscuro
+                    ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
+                    : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+            >
+              {t('Eliminar seleccionadas', 'Delete selected')}
+            </button>
+          )}
           titulo={t('Competencias creadas', 'Created competitions')}
           vacio={t('No hay competencias creadas todavia.', 'There are no created competitions yet.')}
           items={competenciasFiltradas}
@@ -2937,6 +3036,22 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         onToggleSeleccion={(id) => toggleSeleccionLista(setObservacionesSeleccionadas, id)}
         onSeleccionarTodos={() => seleccionarIdsVisibles(setObservacionesSeleccionadas, idsObservacionesVisibles)}
         onDeseleccionarTodos={() => deseleccionarIdsVisibles(setObservacionesSeleccionadas, idsObservacionesVisibles)}
+        accionesCabecera={(
+          <button
+            type="button"
+            onClick={eliminarObservacionesSeleccionadas}
+            disabled={!observacionesSeleccionadas.length}
+            className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${observacionesSeleccionadas.length
+              ? (esOscuro
+                  ? 'border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22'
+                  : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
+              : (esOscuro
+                  ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
+                  : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+          >
+            {t('Eliminar seleccionadas', 'Delete selected')}
+          </button>
+        )}
         titulo={t('Observaciones registradas', 'Saved observations')}
         vacio={t('No hay observaciones registradas todavia.', 'There are no saved observations yet.')}
         items={observacionesFiltradas}
@@ -3579,6 +3694,7 @@ function ListaEntrenadorAsignaciones({
   onToggleSeleccion,
   onSeleccionarTodos,
   onDeseleccionarTodos,
+  accionesCabecera,
 }) {
   const { esOscuro, t } = useUI()
   const seleccionadosVisibles = items.filter((item) => seleccionados.includes(item.id)).length
@@ -3588,19 +3704,28 @@ function ListaEntrenadorAsignaciones({
       <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{t('Vista del entrenador', 'Coach view')}</p>
       <h3 className="mt-2 text-2xl font-semibold">{titulo}</h3>
       {onToggleSeleccion && items.length > 0 && (
-        <div className={`mt-6 grid gap-3 rounded-2xl border p-4 md:grid-cols-[auto_auto_1fr] ${
+        <div className={`mt-6 grid gap-3 rounded-2xl border p-4 md:grid-cols-[auto_auto_auto_1fr] ${
           esOscuro
             ? 'border-white/8 bg-white/5'
             : 'border-slate-200 bg-white/90 shadow-[0_12px_24px_rgba(148,163,184,0.08)]'
         }`}>
-          <button type="button" onClick={onSeleccionarTodos} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${esOscuro ? 'border-cyan-400/25 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/18' : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'}`}>
+          <button
+            type="button"
+            onClick={onSeleccionarTodos}
+            className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${esOscuro ? 'border-cyan-400/25 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/18' : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'}`}
+          >
             {t('Seleccionar visibles', 'Select visible')}
           </button>
-          <button type="button" onClick={onDeseleccionarTodos} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${esOscuro ? 'border-white/15 text-slate-200 hover:bg-white/5' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}>
+          <button
+            type="button"
+            onClick={onDeseleccionarTodos}
+            className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${esOscuro ? 'border-white/15 text-slate-200 hover:bg-white/5' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}
+          >
             {t('Deseleccionar visibles', 'Deselect visible')}
           </button>
+          {accionesCabecera}
           <div className={`rounded-2xl border px-4 py-3 text-sm ${esOscuro ? 'border-white/10 bg-slate-950/60 text-slate-300' : 'border-slate-200 bg-slate-50 text-slate-700'}`}>
-            {t('Seleccionadas en esta vista', 'Selected in this view')}: <span className="font-semibold">{seleccionadosVisibles}</span> ? {t('Total', 'Total')}: <span className="font-semibold">{seleccionados.length}</span>
+            {t('Seleccionadas en esta vista', 'Selected in this view')}: <span className="font-semibold">{seleccionadosVisibles}</span> · {t('Total', 'Total')}: <span className="font-semibold">{seleccionados.length}</span>
           </div>
         </div>
       )}
@@ -3625,6 +3750,11 @@ function ListaEntrenadorAsignaciones({
 }
 
 export default Tablero
+
+
+
+
+
 
 
 
