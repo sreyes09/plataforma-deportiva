@@ -240,6 +240,8 @@ function Tablero() {
     }
   }
 
+  const esPantallaMovil = usePantallaMovil()
+
   // Prepara resumenes y series para no recalcular toda la vista en cada render.
 
   const contenido = useMemo(() => {
@@ -342,7 +344,6 @@ function Tablero() {
     : esEntrenador
       ? t('Entrenador', 'Coach')
       : t('Deportista', 'Athlete')
-  const esPantallaMovil = usePantallaMovil()
 
   const renderModuloActivo = () => {
     if (esAdministrador) {
