@@ -43,6 +43,27 @@ const convertirPorcentaje = (progreso, objetivo) => {
   return Math.min(Math.round((convertirNumero(progreso) / objetivoSeguro) * 100), 100)
 }
 
+// Normaliza nombres visibles y elimina repeticiones accidentales como "Sebastian Sebastian Reyes".
+const construirNombreVisible = (...partes) => {
+  const tokens = partes
+    .filter(Boolean)
+    .join(' ')
+    .split(/\s+/)
+    .map((token) => String(token || '').trim())
+    .filter(Boolean)
+
+  const vistos = new Set()
+  return tokens
+    .filter((token) => {
+      const llave = token.toLowerCase()
+      if (vistos.has(llave)) return false
+      vistos.add(llave)
+      return true
+    })
+    .join(' ')
+    .trim()
+}
+
 // Construye la estructura base del panel segun el rol autenticado.
 export const crearPanelVacio = (usuario) => {
   if (!usuario) return null
@@ -51,7 +72,7 @@ export const crearPanelVacio = (usuario) => {
     return {
       rol: usuario.rol,
       perfil: {
-        nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
+        nombreCompleto: construirNombreVisible(usuario.nombre, usuario.apellidos),
         foto: '',
         cargo: 'Administrador general',
         area: 'Gestion de plataforma',
@@ -85,7 +106,7 @@ export const crearPanelVacio = (usuario) => {
     return {
       rol: usuario.rol,
       perfil: {
-        nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
+        nombreCompleto: construirNombreVisible(usuario.nombre, usuario.apellidos),
         foto: '',
         especialidad: '',
         categoria: '',
@@ -105,7 +126,7 @@ export const crearPanelVacio = (usuario) => {
   return {
     rol: usuario.rol,
     perfil: {
-      nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
+      nombreCompleto: construirNombreVisible(usuario.nombre, usuario.apellidos),
       foto: '',
       disciplina: '',
       categoria: '',
@@ -135,7 +156,7 @@ export const normalizarPanel = (usuario, datos) => {
     perfil: {
       ...base.perfil,
       ...(datos?.perfil || {}),
-      nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`,
+      nombreCompleto: construirNombreVisible(usuario.nombre, usuario.apellidos),
     },
     estadisticas: Array.isArray(datos?.estadisticas) ? datos.estadisticas : [],
     metas: Array.isArray(datos?.metas) ? datos.metas : [],

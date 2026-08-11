@@ -388,6 +388,26 @@ const normalizarPanelAdministrador = async (panel) => {
     paneles.map((item) => [item.usuarioId?.toString?.() || '', item])
   );
 
+  const construirNombreVisible = (...partes) => {
+    const tokens = partes
+      .filter(Boolean)
+      .join(' ')
+      .split(/\s+/)
+      .map((token) => String(token || '').trim())
+      .filter(Boolean);
+
+    const vistos = new Set();
+    return tokens
+      .filter((token) => {
+        const llave = token.toLowerCase();
+        if (vistos.has(llave)) return false;
+        vistos.add(llave);
+        return true;
+      })
+      .join(' ')
+      .trim();
+  };
+
   const usuariosNormalizados = usuarios.map((usuario) => {
     const panelUsuario = panelPorUsuario.get(usuario._id.toString()) || {};
     const estadisticas = Array.isArray(panelUsuario.estadisticas) ? panelUsuario.estadisticas.length : 0;
@@ -397,7 +417,7 @@ const normalizarPanelAdministrador = async (panel) => {
 
     return {
       id: usuario._id.toString(),
-      nombreCompleto: `${usuario.nombre} ${usuario.apellidos}`.trim(),
+      nombreCompleto: construirNombreVisible(usuario.nombre, usuario.apellidos),
       correo: usuario.correo,
       rol: usuario.rol,
       estado: usuario.estado || 'activo',
