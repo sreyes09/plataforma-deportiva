@@ -241,6 +241,7 @@ function Tablero() {
   }
 
   // Prepara resumenes y series para no recalcular toda la vista en cada render.
+
   const contenido = useMemo(() => {
     if (!usuario || !datos) return null
 
