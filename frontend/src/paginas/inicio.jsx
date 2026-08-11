@@ -213,13 +213,13 @@ function ResumenVisual({ esOscuro }) {
 // Botones superiores de tema e idioma con estilo mas cercano a la referencia.
 function BarraPreferencias({ idioma, alternarIdioma, alternarTema, esOscuro, t, tema }) {
   return (
-    <div className="flex flex-wrap items-center justify-end gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
       <button
         type="button"
         onClick={alternarTema}
         title={tema === 'dark' ? t('Tema: oscuro', 'Theme: dark') : t('Tema: claro', 'Theme: light')}
         className={[
-          'flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold uppercase tracking-[0.22em] transition hover:border-cyan-400/40',
+          'flex w-full items-center justify-center gap-3 rounded-2xl border px-4 py-3 text-center text-sm font-semibold uppercase tracking-[0.22em] transition hover:border-cyan-400/40 sm:w-auto',
           esOscuro
             ? 'border-white/12 bg-slate-900/70 text-slate-100 hover:text-cyan-300'
             : 'border-cyan-300/80 bg-white/92 text-slate-800 shadow-[0_10px_24px_rgba(14,116,144,0.12)] hover:text-cyan-600',
@@ -232,7 +232,7 @@ function BarraPreferencias({ idioma, alternarIdioma, alternarTema, esOscuro, t, 
         type="button"
         onClick={alternarIdioma}
         className={[
-          'flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition hover:border-cyan-400/40',
+          'flex w-full items-center justify-center gap-3 rounded-2xl border px-4 py-3 text-center text-sm font-semibold transition hover:border-cyan-400/40 sm:w-auto',
           esOscuro
             ? 'border-white/12 bg-slate-900/70 text-slate-100'
             : 'border-cyan-300/80 bg-white/92 text-slate-800 shadow-[0_10px_24px_rgba(14,116,144,0.12)]',
@@ -384,16 +384,16 @@ function Inicio() {
 
   return (
     <div className={[
-      'min-h-screen overflow-hidden',
+      'min-h-screen overflow-x-hidden',
       esOscuro
         ? 'bg-[radial-gradient(circle_at_top_left,#0c1c4d_0%,#071225_36%,#040916_100%)] text-white'
         : 'bg-[radial-gradient(circle_at_top_left,#dff3ff_0%,#f4f9ff_38%,#e7f0fb_100%)] text-slate-900',
     ].join(' ')}>
-      <div className="relative mx-auto grid min-h-screen w-full max-w-[1680px] gap-10 px-6 py-6 xl:grid-cols-[1.08fr_0.92fr] xl:px-10">
+      <div className="relative mx-auto grid min-h-screen w-full max-w-[1680px] gap-6 px-4 py-4 sm:px-6 sm:py-6 xl:grid-cols-[1.08fr_0.92fr] xl:gap-10 xl:px-10">
         <div className={`pointer-events-none absolute inset-0 ${esOscuro ? 'bg-[radial-gradient(circle_at_20%_85%,rgba(37,99,235,0.18),transparent_18%),radial-gradient(circle_at_70%_25%,rgba(34,211,238,0.12),transparent_14%)]' : 'bg-[radial-gradient(circle_at_20%_85%,rgba(37,99,235,0.12),transparent_18%),radial-gradient(circle_at_70%_25%,rgba(34,211,238,0.1),transparent_14%)]'}`} />
 
         <section className={[
-          'relative z-10 flex min-h-[45rem] flex-col justify-between rounded-[2rem] border p-8 shadow-[0_20px_80px_rgba(2,8,23,0.18)] xl:p-12',
+          'relative z-10 hidden min-h-[45rem] flex-col justify-between rounded-[2rem] border p-8 shadow-[0_20px_80px_rgba(2,8,23,0.18)] xl:flex xl:p-12',
           esOscuro
             ? 'border-white/6 bg-[linear-gradient(180deg,rgba(6,12,28,0.72),rgba(5,10,22,0.48))]'
             : 'border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(240,247,255,0.82))]',
@@ -432,7 +432,7 @@ function Inicio() {
 
           <ResumenVisual esOscuro={esOscuro} />
 
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <div className="mt-8 hidden gap-6 md:grid-cols-3 xl:grid">
             <TarjetaCaracteristica
               icono="atleta"
               titulo={t('Perfil deportivo', 'Sports profile')}
@@ -454,8 +454,29 @@ function Inicio() {
           </div>
         </section>
 
-        <section className="relative z-10 flex items-start justify-center xl:items-center">
-          <div className="w-full max-w-[46rem]">
+        <section className="relative z-10 order-1 flex items-start justify-center xl:items-center">
+          <div className="w-full max-w-[42rem] xl:max-w-[46rem]">
+            <div className="mb-5 xl:hidden">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(180deg,#26d0ff,#2559ff)] text-slate-950 shadow-[0_0_28px_rgba(37,99,235,0.32)]">
+                  <span className="text-xl font-black">V</span>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.34em] text-cyan-300">VYROX</p>
+                  <h2 className={`mt-1 text-3xl font-bold leading-tight ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
+                    {desafio
+                      ? t('Verificaci?n segura', 'Secure verification')
+                      : t('Tu progreso comienza aqu?', 'Your progress starts here')}
+                  </h2>
+                </div>
+              </div>
+              <p className={`mt-3 text-sm leading-7 ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
+                {desafio
+                  ? t('Ingresa el c?digo temporal y termina el acceso a tu cuenta deportiva.', 'Enter the temporary code to finish signing in to your sports account.')
+                  : t('Accede r?pido, ajusta tus preferencias y contin?a con tu seguimiento.', 'Access quickly, adjust your preferences and continue your tracking.')}
+              </p>
+            </div>
+
             <BarraPreferencias
               idioma={idioma}
               alternarIdioma={alternarIdioma}
@@ -466,20 +487,20 @@ function Inicio() {
             />
 
             <div className={[
-              'mt-6 rounded-[2rem] border p-8 shadow-[0_30px_80px_rgba(2,8,23,0.2)] xl:p-10',
+              'mt-5 rounded-[1.75rem] border p-5 shadow-[0_24px_60px_rgba(2,8,23,0.18)] sm:p-7 xl:mt-6 xl:rounded-[2rem] xl:p-10',
               esOscuro
                 ? 'border-white/10 bg-[linear-gradient(180deg,rgba(18,28,52,0.96),rgba(10,17,34,0.94))]'
                 : 'border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(241,247,255,0.94))]',
             ].join(' ')}>
               <div className="mb-8">
-                <h3 className={`text-4xl font-bold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
+                <h3 className={`text-3xl font-bold sm:text-4xl ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
                   {desafio
                     ? t('Verificación de acceso', 'Access verification')
                     : vistaAcceso === 'recuperar'
                       ? t('Recuperar acceso', 'Recover access')
                       : t('Iniciar sesión', 'Sign in')}
                 </h3>
-                <p className={`mt-3 text-lg ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
+                <p className={`mt-3 text-base leading-7 sm:text-lg ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
                   {desafio
                     ? t('Ingrese el código enviado al correo registrado.', 'Enter the code sent to the registered email.')
                     : vistaAcceso === 'recuperar'
@@ -630,7 +651,7 @@ function Inicio() {
                               ))}
                             </div>
                           </div>
-                          <div className="flex gap-3">
+                          <div className="flex flex-col gap-3 sm:flex-row">
                             <BotonPrimario type="submit" disabled={cargando || !validacionRestablecimiento.esValida} className="flex-1 py-4">
                               {t('Restablecer contraseña', 'Reset password')}
                             </BotonPrimario>
@@ -700,7 +721,7 @@ function Inicio() {
 
                   {cargando && <IndicadorCarga texto={t('Consultando al servidor...', 'Contacting the server...')} />}
 
-                  <div className="text-right">
+                  <div className="flex justify-center sm:justify-end">
                     <button
                       type="button"
                       onClick={() => {

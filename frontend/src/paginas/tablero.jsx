@@ -120,6 +120,23 @@ const crearModulosAdministrador = (t) => [
   { id: 'supervision', titulo: t('Supervisión general', 'General oversight'), descripcion: t('Consulta actividad, volumen y comportamiento global de la plataforma.', 'Review platform-wide activity, volume, and behavior.') },
 ]
 
+function usePantallaMovil() {
+  const [esPantallaMovil, setEsPantallaMovil] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false,
+  )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const actualizar = () => setEsPantallaMovil(window.innerWidth < 768)
+    actualizar()
+    window.addEventListener('resize', actualizar)
+    return () => window.removeEventListener('resize', actualizar)
+  }, [])
+
+  return esPantallaMovil
+}
+
 // Pantalla principal del sistema. Cambia dinamicamente segun el rol autenticado.
 function Tablero() {
   const { usuario, cerrarSesion } = useAuth()
@@ -324,6 +341,40 @@ function Tablero() {
     : esEntrenador
       ? t('Entrenador', 'Coach')
       : t('Deportista', 'Athlete')
+  const esPantallaMovil = usePantallaMovil()
+
+  const renderModuloActivo = () => {
+    if (esAdministrador) {
+      return (
+        <ModuloAdministrador
+          datos={datos}
+          moduloActivo={moduloActivo}
+          guardarCambios={guardarCambios}
+          cambiarEstadoUsuario={cambiarEstadoUsuario}
+        />
+      )
+    }
+
+    if (esEntrenador) {
+      return (
+        <ModuloEntrenador
+          datos={datos}
+          moduloActivo={moduloActivo}
+          guardarCambios={guardarCambios}
+          vincularDeportista={vincularDeportista}
+        />
+      )
+    }
+
+    return (
+      <ModuloDeportista
+        datos={datos}
+        moduloActivo={moduloActivo}
+        guardarCambios={guardarCambios}
+        ranking={contenido.ranking}
+      />
+    )
+  }
 
   return (
     <div className={`min-h-screen ${esOscuro ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -332,13 +383,13 @@ function Tablero() {
           ? 'border-white/10 bg-slate-950/60'
           : 'border-slate-200/80 bg-white/72'
       }`}>
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+        <div className="mx-auto flex max-w-7xl flex-col items-start gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:py-5">
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">Vyrox</p>
             <h1 className="text-2xl font-semibold">{t('Panel de', 'Dashboard for')} {rolTexto}</h1>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end lg:w-auto">
             <ControlPreferencia
               etiqueta={t('Tema', 'Theme')}
               valor={tema === 'dark' ? t('Oscuro', 'Dark') : t('Claro', 'Light')}
@@ -349,7 +400,7 @@ function Tablero() {
               valor={idioma === 'es' ? t('Español', 'Spanish') : t('Inglés', 'English')}
               onClick={alternarIdioma}
             />
-            <div className="text-right">
+            <div className="w-full text-left sm:flex-1 sm:text-right lg:w-auto">
               <p className={`text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{t('Hola,', 'Hello,')} <span className={`font-semibold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{formatearNombreVisible(usuario.nombre, usuario.apellidos)}</span></p>
               <p className="text-xs uppercase tracking-[0.25em] text-amber-400">
                 {etiquetaRolVisible(rolUsuario, t)}
@@ -357,7 +408,7 @@ function Tablero() {
             </div>
             <BotonSecundario
               onClick={manejarCerrarSesion}
-              className="border-rose-400/35 bg-rose-500/12 text-rose-100 hover:bg-rose-500/18"
+              className="w-full justify-center border-rose-400/35 bg-rose-500/12 text-rose-100 hover:bg-rose-500/18 sm:w-auto"
             >
               {t('Cerrar sesión', 'Sign out')}
             </BotonSecundario>
@@ -365,7 +416,7 @@ function Tablero() {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8">
 
         {(errorApi || guardando) && (
           <section className="mb-6">
@@ -379,167 +430,252 @@ function Tablero() {
           </section>
         )}
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {esAdministrador ? (
             <>
               <ResumenCard titulo={t('Usuarios', 'Users')} valor={contenido.resumen.usuarios} detalle={t('cuentas registradas', 'registered accounts')} />
               <ResumenCard titulo={t('Deportistas', 'Athletes')} valor={contenido.resumen.deportistas} detalle={t('usuarios del rendimiento', 'performance users')} />
               <ResumenCard titulo={t('Entrenadores', 'Coaches')} valor={contenido.resumen.entrenadores} detalle={t('cuentas t?cnicas', 'technical accounts')} />
-              <ResumenCard titulo={t('Activos', 'Active')} valor={contenido.resumen.activos} detalle={t(`${contenido.resumen.inactivos} inactivos`, `${contenido.resumen.inactivos} inactive`)} />
+              <ResumenCard titulo={t('Activos', 'Active')} valor={contenido.resumen.activos} detalle={t('${contenido.resumen.inactivos} inactivos', '${contenido.resumen.inactivos} inactive')} />
             </>
           ) : esEntrenador ? (
             <>
               <ResumenCard titulo={t('Deportistas', 'Athletes')} valor={contenido.resumen.deportistas} detalle={t('cuentas vinculadas', 'linked accounts')} />
-              <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t(`${contenido.resumen.sesionesPendientes} pendientes`, `${contenido.resumen.sesionesPendientes} pending`)} />
+              <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t('${contenido.resumen.sesionesPendientes} pendientes', '${contenido.resumen.sesionesPendientes} pending')} />
               <ResumenCard titulo={t('Alertas', 'Alerts')} valor={contenido.resumen.alertas} detalle={t('observaciones prioritarias', 'priority observations')} />
-              <ResumenCard titulo={t('Competencias', 'Competitions')} valor={contenido.resumen.competencias} detalle={t(`${contenido.resumen.promedioProgreso}% progreso promedio`, `${contenido.resumen.promedioProgreso}% average progress`)} />
+              <ResumenCard titulo={t('Competencias', 'Competitions')} valor={contenido.resumen.competencias} detalle={t('${contenido.resumen.promedioProgreso}% progreso promedio', '${contenido.resumen.promedioProgreso}% average progress')} />
             </>
           ) : (
             <>
               <ResumenCard titulo={t('Estad?sticas', 'Statistics')} valor={contenido.resumen.estadisticas} detalle={t('registros personales', 'personal records')} />
               <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t('asignadas por entrenadores', 'assigned by coaches')} />
-              <ResumenCard titulo={t('Metas', 'Goals')} valor={contenido.resumen.metas} detalle={t(`${contenido.resumen.metasCompletadas} completadas`, `${contenido.resumen.metasCompletadas} completed`)} />
+              <ResumenCard titulo={t('Metas', 'Goals')} valor={contenido.resumen.metas} detalle={t('${contenido.resumen.metasCompletadas} completadas', '${contenido.resumen.metasCompletadas} completed')} />
               <ResumenCard titulo={t('Competencias', 'Competitions')} valor={contenido.resumen.competencias} detalle={t('eventos asignados', 'assigned events')} />
             </>
           )}
         </section>
 
-        {!esAdministrador && (
+        {!esAdministrador && !esPantallaMovil && (
           <section className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <Panel className="min-h-80">
-            <div className="mb-6">
-              <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{contenido.graficoPrincipal.etiqueta}</p>
-              <h2 className="text-xl font-semibold">{contenido.graficoPrincipal.titulo}</h2>
-            </div>
-
-            <div className="h-64">
-              {contenido.seriePrincipal.length === 0 ? (
-                <EstadoVacio mensaje={t('Todavía no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={contenido.seriePrincipal}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="etiqueta" stroke="#cbd5e1" />
-                    <YAxis
-                      stroke="#cbd5e1"
-                      domain={contenido.graficoPrincipal.limitePorcentaje ? [0, 100] : ['auto', 'auto']}
-                      allowDecimals={false}
-                    />
-                    <Tooltip
-                      formatter={(valor, _, item) => {
-                        const detalle = item?.payload?.detalle ? ` (${item.payload.detalle})` : ''
-                        return `${valor}${contenido.graficoPrincipal.sufijoValor}${detalle}`
-                      }}
-                      labelFormatter={(label) => label}
-                    />
-                    <Bar dataKey={contenido.graficoPrincipal.valorKey} radius={[10, 10, 0, 0]}>
-                      {contenido.seriePrincipal.map((item, indice) => (
-                        <Cell key={`${item.etiqueta}-${indice}`} fill={coloresGrafico[indice % coloresGrafico.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </Panel>
-
-          <Panel className="min-h-80">
-            <div className="mb-6">
-              <p className="text-sm uppercase tracking-[0.3em] text-amber-300">{contenido.graficoSecundario.etiqueta}</p>
-              <h2 className="text-xl font-semibold">{contenido.graficoSecundario.titulo}</h2>
-            </div>
-
-            <div className="h-64">
-              {contenido.serieSecundaria.length === 0 ? (
-                <EstadoVacio mensaje={t('Aun no hay metas suficientes para construir esta gráfica.', 'There are not enough goals yet to build this chart.')} />
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={contenido.serieSecundaria}
-                      dataKey="valor"
-                      nameKey="nombre"
-                      innerRadius={58}
-                      outerRadius={92}
-                      paddingAngle={4}
-                    >
-                      {contenido.serieSecundaria.map((item, indice) => (
-                        <Cell key={`${item.nombre}-${indice}`} fill={coloresGrafico[indice % coloresGrafico.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(valor, _, item) => `${valor} ${item?.payload?.nombre?.toLowerCase?.() || ''}`} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <div className="mt-4 flex items-center justify-between gap-4 text-sm text-slate-300">
-              <p>{contenido.graficoSecundario.total} {t('elementos evaluados', 'items evaluated')}</p>
-              <div className={`rounded-full border px-4 py-2 font-semibold ${esOscuro ? 'border-cyan-400/30 bg-cyan-400/10 text-cyan-100' : 'border-cyan-300 bg-white text-cyan-800 shadow-[0_10px_22px_rgba(34,211,238,0.16)]'}`}>
-                {contenido.graficoSecundario.porcentajeCentro}% {t('completado', 'completed')}
+            <Panel className="min-h-80">
+              <div className="mb-6">
+                <p className="text-sm uppercase tracking-[0.3em] text-cyan-300">{contenido.graficoPrincipal.etiqueta}</p>
+                <h2 className="text-xl font-semibold">{contenido.graficoPrincipal.titulo}</h2>
               </div>
-            </div>
-          </Panel>
-        </section>
+
+              <div className="h-64">
+                {contenido.seriePrincipal.length === 0 ? (
+                  <EstadoVacio mensaje={t('Todav?a no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={contenido.seriePrincipal}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="etiqueta" stroke="#cbd5e1" />
+                      <YAxis
+                        stroke="#cbd5e1"
+                        domain={contenido.graficoPrincipal.limitePorcentaje ? [0, 100] : ['auto', 'auto']}
+                        allowDecimals={false}
+                      />
+                      <Tooltip
+                        formatter={(valor, _, item) => {
+                          const detalle = item?.payload?.detalle ? ' (${item.payload.detalle})' : ''
+                          return '${valor}${contenido.graficoPrincipal.sufijoValor}${detalle}'
+                        }}
+                        labelFormatter={(label) => label}
+                      />
+                      <Bar dataKey={contenido.graficoPrincipal.valorKey} radius={[10, 10, 0, 0]}>
+                        {contenido.seriePrincipal.map((item, indice) => (
+                          <Cell key={'${item.etiqueta}-${indice}'} fill={coloresGrafico[indice % coloresGrafico.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </Panel>
+
+            <Panel className="min-h-80">
+              <div className="mb-6">
+                <p className="text-sm uppercase tracking-[0.3em] text-amber-300">{contenido.graficoSecundario.etiqueta}</p>
+                <h2 className="text-xl font-semibold">{contenido.graficoSecundario.titulo}</h2>
+              </div>
+
+              <div className="h-64">
+                {contenido.serieSecundaria.length === 0 ? (
+                  <EstadoVacio mensaje={t('A?n no hay metas suficientes para construir esta gr?fica.', 'There are not enough goals yet to build this chart.')} />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={contenido.serieSecundaria}
+                        dataKey="valor"
+                        nameKey="nombre"
+                        innerRadius={58}
+                        outerRadius={92}
+                        paddingAngle={4}
+                      >
+                        {contenido.serieSecundaria.map((item, indice) => (
+                          <Cell key={'${item.nombre}-${indice}'} fill={coloresGrafico[indice % coloresGrafico.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(valor, _, item) => '${valor} ${item?.payload?.nombre?.toLowerCase?.() || ""}'} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-4 text-sm text-slate-300">
+                <p>{contenido.graficoSecundario.total} {t('elementos evaluados', 'items evaluated')}</p>
+                <div className={'rounded-full border px-4 py-2 font-semibold ' + (esOscuro ? 'border-cyan-400/30 bg-cyan-400/10 text-cyan-100' : 'border-cyan-300 bg-white text-cyan-800 shadow-[0_10px_22px_rgba(34,211,238,0.16)]')}>
+                  {contenido.graficoSecundario.porcentajeCentro}% {t('completado', 'completed')}
+                </div>
+              </div>
+            </Panel>
+          </section>
         )}
 
-        <section className="mt-8">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {esPantallaMovil ? (
+          <section className="mt-8 space-y-4">
             {contenido.modulos.map((modulo) => (
-              <button
-                key={modulo.id}
-                onClick={() => setModuloActivo(modulo.id)}
-                className={`group rounded-3xl border p-5 text-left transition duration-200 ${
-                  moduloActivo === modulo.id
-                    ? (esOscuro
-                        ? 'border-cyan-400 bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(37,99,235,0.14))] shadow-[0_18px_40px_rgba(8,145,178,0.24)]'
-                        : 'border-cyan-500 bg-[linear-gradient(135deg,rgba(34,211,238,0.22),rgba(37,99,235,0.18))] shadow-[0_22px_44px_rgba(14,116,144,0.18)]')
-                    : (esOscuro
-                        ? 'border-white/8 bg-white/5 hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-white/7'
-                        : 'border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(244,249,255,0.92))] shadow-[0_14px_28px_rgba(148,163,184,0.12)] hover:-translate-y-1 hover:border-cyan-500/45 hover:shadow-[0_18px_36px_rgba(14,116,144,0.16)]')
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-lg font-semibold">{modulo.titulo}</p>
-                  <span className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.24em] ${
+              <div key={modulo.id} className="space-y-3">
+                <button
+                  onClick={() => setModuloActivo(modulo.id)}
+                  className={'group w-full rounded-[1.8rem] border p-4 text-left transition duration-200 sm:p-5 ' + (
                     moduloActivo === modulo.id
-                      ? (esOscuro ? 'bg-cyan-400/18 text-cyan-200' : 'bg-[linear-gradient(135deg,#22d3ee,#60a5fa)] text-white shadow-[0_8px_18px_rgba(37,99,235,0.2)]')
-                      : (esOscuro ? 'bg-white/8 text-slate-300' : 'bg-slate-200/90 text-slate-700')
-                  }`}>
-                    {moduloActivo === modulo.id ? t('Activo', 'Active') : t('Abrir', 'Open')}
-                  </span>
-                </div>
-                <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{modulo.descripcion}</p>
-              </button>
-            ))}
-          </div>
-        </section>
+                      ? (esOscuro
+                          ? 'border-cyan-400 bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(37,99,235,0.14))] shadow-[0_18px_40px_rgba(8,145,178,0.24)]'
+                          : 'border-cyan-500 bg-[linear-gradient(135deg,rgba(34,211,238,0.22),rgba(37,99,235,0.18))] shadow-[0_22px_44px_rgba(14,116,144,0.18)]')
+                      : (esOscuro
+                          ? 'border-white/8 bg-white/5 hover:border-cyan-400/30 hover:bg-white/7'
+                          : 'border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(244,249,255,0.92))] shadow-[0_14px_28px_rgba(148,163,184,0.12)] hover:border-cyan-500/45 hover:shadow-[0_18px_36px_rgba(14,116,144,0.16)]')
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-base font-semibold sm:text-lg">{modulo.titulo}</p>
+                    <span className={'rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.24em] ' + (
+                      moduloActivo === modulo.id
+                        ? (esOscuro ? 'bg-cyan-400/18 text-cyan-200' : 'bg-[linear-gradient(135deg,#22d3ee,#60a5fa)] text-white shadow-[0_8px_18px_rgba(37,99,235,0.2)]')
+                        : (esOscuro ? 'bg-white/8 text-slate-300' : 'bg-slate-200/90 text-slate-700')
+                    )}>
+                      {moduloActivo === modulo.id ? t('Activo', 'Active') : t('Abrir', 'Open')}
+                    </span>
+                  </div>
+                  <p className={'mt-2 text-sm ' + (esOscuro ? 'text-slate-300' : 'text-slate-600')}>{modulo.descripcion}</p>
+                </button>
 
-        <section className="mt-8">
-          <Panel>
-            {esAdministrador ? (
-              <ModuloAdministrador
-                datos={datos}
-                moduloActivo={moduloActivo}
-                guardarCambios={guardarCambios}
-                cambiarEstadoUsuario={cambiarEstadoUsuario}
-              />
-            ) : esEntrenador ? (
-              <ModuloEntrenador
-                datos={datos}
-                moduloActivo={moduloActivo}
-                guardarCambios={guardarCambios}
-                vincularDeportista={vincularDeportista}
-              />
-            ) : (
-              <ModuloDeportista
-                datos={datos}
-                moduloActivo={moduloActivo}
-                guardarCambios={guardarCambios}
-                ranking={contenido.ranking}
-              />
-            )}
-          </Panel>
-        </section>
+                {moduloActivo === modulo.id && (
+                  <Panel className="p-4 sm:p-5">
+                    {renderModuloActivo()}
+                  </Panel>
+                )}
+              </div>
+            ))}
+          </section>
+        ) : (
+          <>
+            <section className="mt-8">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {contenido.modulos.map((modulo) => (
+                  <button
+                    key={modulo.id}
+                    onClick={() => setModuloActivo(modulo.id)}
+                    className={'group rounded-3xl border p-5 text-left transition duration-200 ' + (
+                      moduloActivo === modulo.id
+                        ? (esOscuro
+                            ? 'border-cyan-400 bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(37,99,235,0.14))] shadow-[0_18px_40px_rgba(8,145,178,0.24)]'
+                            : 'border-cyan-500 bg-[linear-gradient(135deg,rgba(34,211,238,0.22),rgba(37,99,235,0.18))] shadow-[0_22px_44px_rgba(14,116,144,0.18)]')
+                        : (esOscuro
+                            ? 'border-white/8 bg-white/5 hover:-translate-y-1 hover:border-cyan-400/30 hover:bg-white/7'
+                            : 'border-slate-200/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(244,249,255,0.92))] shadow-[0_14px_28px_rgba(148,163,184,0.12)] hover:-translate-y-1 hover:border-cyan-500/45 hover:shadow-[0_18px_36px_rgba(14,116,144,0.16)]')
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-lg font-semibold">{modulo.titulo}</p>
+                      <span className={'rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.24em] ' + (
+                        moduloActivo === modulo.id
+                          ? (esOscuro ? 'bg-cyan-400/18 text-cyan-200' : 'bg-[linear-gradient(135deg,#22d3ee,#60a5fa)] text-white shadow-[0_8px_18px_rgba(37,99,235,0.2)]')
+                          : (esOscuro ? 'bg-white/8 text-slate-300' : 'bg-slate-200/90 text-slate-700')
+                      )}>
+                        {moduloActivo === modulo.id ? t('Activo', 'Active') : t('Abrir', 'Open')}
+                      </span>
+                    </div>
+                    <p className={'mt-2 text-sm ' + (esOscuro ? 'text-slate-300' : 'text-slate-600')}>{modulo.descripcion}</p>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-8">
+              <Panel>
+                {renderModuloActivo()}
+              </Panel>
+            </section>
+          </>
+        )}
+
+        {!esAdministrador && esPantallaMovil && (
+          <section className="mt-8 grid gap-4">
+            <Panel className="min-h-[18rem] p-4 sm:p-5">
+              <div className="mb-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">{contenido.graficoPrincipal.etiqueta}</p>
+                <h2 className="text-lg font-semibold">{contenido.graficoPrincipal.titulo}</h2>
+              </div>
+              <div className="h-56">
+                {contenido.seriePrincipal.length === 0 ? (
+                  <EstadoVacio mensaje={t('Todav?a no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={contenido.seriePrincipal}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="etiqueta" stroke="#cbd5e1" />
+                      <YAxis stroke="#cbd5e1" domain={contenido.graficoPrincipal.limitePorcentaje ? [0, 100] : ['auto', 'auto']} allowDecimals={false} />
+                      <Tooltip
+                        formatter={(valor, _, item) => {
+                          const detalle = item?.payload?.detalle ? ' (${item.payload.detalle})' : ''
+                          return '${valor}${contenido.graficoPrincipal.sufijoValor}${detalle}'
+                        }}
+                        labelFormatter={(label) => label}
+                      />
+                      <Bar dataKey={contenido.graficoPrincipal.valorKey} radius={[10, 10, 0, 0]}>
+                        {contenido.seriePrincipal.map((item, indice) => (
+                          <Cell key={'${item.etiqueta}-${indice}'} fill={coloresGrafico[indice % coloresGrafico.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </Panel>
+
+            <Panel className="min-h-[18rem] p-4 sm:p-5">
+              <div className="mb-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-amber-300">{contenido.graficoSecundario.etiqueta}</p>
+                <h2 className="text-lg font-semibold">{contenido.graficoSecundario.titulo}</h2>
+              </div>
+              <div className="h-56">
+                {contenido.serieSecundaria.length === 0 ? (
+                  <EstadoVacio mensaje={t('A?n no hay metas suficientes para construir esta gr?fica.', 'There are not enough goals yet to build this chart.')} />
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={contenido.serieSecundaria} dataKey="valor" nameKey="nombre" innerRadius={46} outerRadius={78} paddingAngle={4}>
+                        {contenido.serieSecundaria.map((item, indice) => (
+                          <Cell key={'${item.nombre}-${indice}'} fill={coloresGrafico[indice % coloresGrafico.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(valor, _, item) => '${valor} ${item?.payload?.nombre?.toLowerCase?.() || ""}'} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+              <div className="mt-4 flex flex-col gap-3 text-sm text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+                <p>{contenido.graficoSecundario.total} {t('elementos evaluados', 'items evaluated')}</p>
+                <div className={'rounded-full border px-4 py-2 font-semibold ' + (esOscuro ? 'border-cyan-400/30 bg-cyan-400/10 text-cyan-100' : 'border-cyan-300 bg-white text-cyan-800 shadow-[0_10px_22px_rgba(34,211,238,0.16)]')}>
+                  {contenido.graficoSecundario.porcentajeCentro}% {t('completado', 'completed')}
+                </div>
+              </div>
+            </Panel>
+          </section>
+        )}
       </main>
     </div>
   )
@@ -3162,13 +3298,13 @@ function ResumenCard({ titulo, valor, detalle }) {
   const { esOscuro } = useUI()
 
   return (
-    <article className={`rounded-3xl border p-6 shadow-xl backdrop-blur ${
+    <article className={`rounded-[1.75rem] border p-5 shadow-xl backdrop-blur sm:rounded-3xl sm:p-6 ${
       esOscuro
         ? 'border-white/8 bg-[linear-gradient(180deg,rgba(15,23,42,0.85),rgba(15,23,42,0.55))] shadow-slate-950/20'
         : 'border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(240,249,255,0.92))] shadow-cyan-950/8'
     }`}>
       <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>{titulo}</p>
-      <p className={`mt-4 text-4xl font-semibold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{valor}</p>
+      <p className={`mt-4 text-3xl font-semibold sm:text-4xl ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{valor}</p>
       <p className={`mt-3 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{detalle}</p>
     </article>
   )
@@ -3193,7 +3329,7 @@ function Panel({ children, className = '' }) {
   const { esOscuro } = useUI()
 
   return (
-    <div className={`rounded-[28px] border p-6 shadow-2xl backdrop-blur ${esOscuro ? 'border-white/8 bg-slate-900/65 shadow-slate-950/30' : 'border-slate-200/80 bg-white/80 shadow-cyan-950/10'} ${className}`}>
+    <div className={`rounded-[24px] border p-4 shadow-2xl backdrop-blur sm:rounded-[28px] sm:p-6 ${esOscuro ? 'border-white/8 bg-slate-900/65 shadow-slate-950/30' : 'border-slate-200/80 bg-white/80 shadow-cyan-950/10'} ${className}`}>
       {children}
     </div>
   )

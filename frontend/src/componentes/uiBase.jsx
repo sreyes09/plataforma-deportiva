@@ -101,7 +101,7 @@ export function ControlPreferencia({ etiqueta, valor, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        'rounded-full border px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.24em] transition',
+        'flex w-full items-center justify-center rounded-full border px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-[0.24em] transition sm:w-auto',
         esOscuro
           ? 'border-white/12 bg-white/6 text-slate-200 hover:bg-white/10'
           : 'border-cyan-300/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(237,248,255,0.94))] text-slate-800 shadow-[0_10px_24px_rgba(14,116,144,0.12)] hover:border-cyan-500 hover:bg-white',
