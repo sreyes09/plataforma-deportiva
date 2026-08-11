@@ -355,15 +355,29 @@ const construirAsignacionDeportista = (item, entrenador) => ({
   asignados: item.asignados?.map((id) => id.toString()) || [],
 });
 
+// Genera logros autom?ticos a partir de metas completadas para reforzar la motivaci?n del deportista.
 const construirLogrosDesdeMetas = (metasAsignadas) =>
   metasAsignadas
     .filter((meta) => meta.estado === 'completada' || meta.progreso >= meta.objetivo)
-    .map((meta) => ({
-      id: `logro-${meta.id}`,
-      titulo: `Meta completada: ${meta.titulo}`,
-      descripcion: `Asignada por ${meta.entrenadorNombre}.`,
-      nivel: 'oro',
-    }));
+    .map((meta) => {
+      const objetivo = Number(meta.objetivo) || 0
+      const progreso = Number(meta.progreso) || 0
+      const porcentaje = objetivo > 0 ? Math.round((progreso / objetivo) * 100) : 100
+
+      let nivel = 'bronce'
+      if (porcentaje >= 150) nivel = 'diamante'
+      else if (porcentaje >= 120) nivel = 'oro'
+      else if (porcentaje >= 100) nivel = 'plata'
+
+      return {
+        id: `logro-${meta.id}` ,
+        titulo: `Meta completada: ${meta.titulo}` ,
+        descripcion: `Asignada por ${meta.entrenadorNombre}. Avance final: ${progreso}/${objetivo || progreso}.`,
+        nivel,
+        badge: 'meta-cumplida',
+        porcentaje,
+      }
+    });
 
 const normalizarPanelAdministrador = async (panel) => {
   const usuarios = await Usuario.find({})

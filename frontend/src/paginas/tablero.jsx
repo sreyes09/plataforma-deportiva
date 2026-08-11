@@ -799,15 +799,35 @@ const deseleccionarEstadisticasVisibles = () => {
 
   // Elimina una estadistica puntual del historial del deportista.
   const eliminarEstadistica = async (indiceOriginal) => {
-    await guardarCambios((actuales) => ({
-      ...actuales,
-      estadisticas: actuales.estadisticas.filter((_, indice) => indice !== indiceOriginal),
-    }))
+  await guardarCambios((actuales) => ({
+    ...actuales,
+    estadisticas: actuales.estadisticas.filter((_, indice) => indice !== indiceOriginal),
+  }))
 
-    if (indiceEdicionEstadistica === indiceOriginal) {
-      reiniciarFormularioEstadistica()
-    }
+  setEstadisticasSeleccionadas((previas) => previas.filter((indice) => indice !== indiceOriginal))
+
+  if (indiceEdicionEstadistica === indiceOriginal) {
+    reiniciarFormularioEstadistica()
   }
+}
+
+// Borra en bloque las estadisticas seleccionadas para agilizar la limpieza del historial.
+const eliminarEstadisticasSeleccionadas = async () => {
+  if (!estadisticasSeleccionadas.length) return
+
+  const indicesSeleccionados = new Set(estadisticasSeleccionadas)
+
+  await guardarCambios((actuales) => ({
+    ...actuales,
+    estadisticas: actuales.estadisticas.filter((_, indice) => !indicesSeleccionados.has(indice)),
+  }))
+
+  setEstadisticasSeleccionadas([])
+
+  if (indiceEdicionEstadistica !== null && indicesSeleccionados.has(indiceEdicionEstadistica)) {
+    reiniciarFormularioEstadistica()
+  }
+}
 
   if (moduloActivo === 'perfil') {
     return (
@@ -834,81 +854,6 @@ const deseleccionarEstadisticasVisibles = () => {
               </div>
             ))}
           </div>
-          {mostrarBloquesAnaliticos && (
-            <>
-              <div className="grid gap-4 xl:grid-cols-2">
-                {estadisticasPorMetrica.length > 0 && (
-                  <div className={`rounded-2xl border p-4 ${
-                    esOscuro
-                      ? 'border-white/8 bg-white/5'
-                      : 'border-cyan-200/80 bg-white shadow-[0_14px_28px_rgba(14,116,144,0.1)]'
-                  }`}>
-                    <p className={`text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Analítica personal', 'Personal analytics')}</p>
-                    <h4 className="mt-2 text-lg font-semibold">{t('Métricas más registradas', 'Most logged metrics')}</h4>
-                    <div className="mt-4 h-56">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={estadisticasPorMetrica}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={esOscuro ? '#334155' : '#cbd5e1'} />
-                          <XAxis dataKey="nombre" stroke={esOscuro ? '#cbd5e1' : '#475569'} />
-                          <YAxis stroke={esOscuro ? '#cbd5e1' : '#475569'} allowDecimals={false} />
-                          <Tooltip />
-                          <Bar dataKey="valor" radius={[10, 10, 0, 0]} fill="#22d3ee" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                )}
-                {historialReciente.length > 0 && (
-                  <div className={`rounded-2xl border p-4 ${
-                    esOscuro
-                      ? 'border-white/8 bg-white/5'
-                      : 'border-amber-200/80 bg-white shadow-[0_14px_28px_rgba(245,158,11,0.1)]'
-                  }`}>
-                    <p className={`text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-amber-300' : 'text-amber-600'}`}>{t('Evolución reciente', 'Recent evolution')}</p>
-                    <h4 className="mt-2 text-lg font-semibold">{t('Últimos registros cargados', 'Latest logged records')}</h4>
-                    <div className="mt-4 h-56">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={historialReciente}>
-                          <defs>
-                            <linearGradient id="vyroxAreaProgreso" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.8} />
-                              <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.08} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke={esOscuro ? '#334155' : '#cbd5e1'} />
-                          <XAxis dataKey="fecha" stroke={esOscuro ? '#cbd5e1' : '#475569'} />
-                          <YAxis stroke={esOscuro ? '#cbd5e1' : '#475569'} allowDecimals={false} />
-                          <Tooltip />
-                          <Area type="monotone" dataKey="valor" stroke="#38bdf8" fill="url(#vyroxAreaProgreso)" strokeWidth={3} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                )}
-              </div>
-              {progresoMetasPerfil.length > 0 && (
-                <div className={`rounded-2xl border p-4 ${
-                  esOscuro
-                    ? 'border-white/8 bg-white/5'
-                    : 'border-cyan-200/80 bg-white shadow-[0_14px_28px_rgba(14,116,144,0.1)]'
-                }`}>
-                  <p className={`text-xs uppercase tracking-[0.24em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{t('Cumplimiento de metas', 'Goal completion')}</p>
-                  <h4 className="mt-2 text-lg font-semibold">{t('Porcentaje por meta asignada', 'Percentage by assigned goal')}</h4>
-                  <div className="mt-4 h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={progresoMetasPerfil}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={esOscuro ? '#334155' : '#cbd5e1'} />
-                        <XAxis dataKey="nombre" stroke={esOscuro ? '#cbd5e1' : '#475569'} />
-                        <YAxis stroke={esOscuro ? '#cbd5e1' : '#475569'} domain={[0, 100]} allowDecimals={false} />
-                        <Tooltip formatter={(valor, _, item) => `${valor}% (${item?.payload?.detalle || ''})`} />
-                        <Line type="monotone" dataKey="valor" stroke="#f59e0b" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
         </div>
 
         {editandoPerfil || !perfilTieneContenido ? (
@@ -1114,7 +1059,7 @@ const deseleccionarEstadisticasVisibles = () => {
               </button>
             </div>
           </div>
-          <div className={`grid gap-3 rounded-2xl border p-4 md:grid-cols-[auto_auto_1fr] ${
+          <div className={`grid gap-3 rounded-2xl border p-4 md:grid-cols-[auto_auto_auto_1fr] ${
             esOscuro
               ? 'border-white/8 bg-white/5'
               : 'border-slate-200 bg-white/90 shadow-[0_12px_24px_rgba(148,163,184,0.08)]'
@@ -1128,7 +1073,7 @@ const deseleccionarEstadisticasVisibles = () => {
                   : 'border-cyan-300 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'
               }`}
             >
-              {t('Seleccionar visibles', 'Select visible')}
+              {t('Seleccionar todas', 'Select all')}
             </button>
             <button
               type="button"
@@ -1139,7 +1084,21 @@ const deseleccionarEstadisticasVisibles = () => {
                   : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
               }`}
             >
-              {t('Deseleccionar visibles', 'Deselect visible')}
+              {t('Deseleccionar todas', 'Deselect all')}
+            </button>
+            <button
+              type="button"
+              onClick={eliminarEstadisticasSeleccionadas}
+              disabled={!estadisticasSeleccionadas.length}
+              className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${estadisticasSeleccionadas.length
+                ? (esOscuro
+                    ? 'border border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22'
+                    : 'border border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
+                : (esOscuro
+                    ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
+                    : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+            >
+              {t('Borrar seleccionadas', 'Delete selected')}
             </button>
             <div className={`rounded-2xl border px-4 py-3 text-sm ${
               esOscuro
@@ -1401,13 +1360,36 @@ const deseleccionarEstadisticasVisibles = () => {
         </div>
       ) : (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {datos.logros.map((logro) => (
-            <div key={logro.id} className="rounded-2xl border border-amber-300/20 bg-amber-400/10 p-5">
-              <p className="text-xs uppercase tracking-[0.25em] text-amber-300">{logro.nivel}</p>
-              <h4 className="mt-2 text-xl font-semibold">{logro.titulo}</h4>
-              <p className="mt-2 text-sm text-slate-200">{logro.descripcion}</p>
-            </div>
-          ))}
+          {datos.logros.map((logro) => {
+            const badge = obtenerBadgeLogro(logro)
+
+            return (
+              <div
+                key={logro.id}
+                className={`rounded-[26px] border p-5 ${esOscuro
+                  ? 'border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(15,23,42,0.64))]'
+                  : 'border-amber-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,251,235,0.94))] shadow-[0_18px_34px_rgba(245,158,11,0.12)]'}`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl shadow-[0_12px_24px_rgba(15,23,42,0.18)] ${badge.fondo}`}>
+                    <span aria-hidden="true">{badge.icono}</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${badge.etiqueta}`}>
+                        {badge.nombre}
+                      </span>
+                      <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'bg-cyan-100 text-cyan-900'}`}>
+                        {limpiarTextoVisual(logro.nivel || t('Logro', 'Achievement'))}
+                      </span>
+                    </div>
+                    <h4 className="mt-3 text-xl font-semibold">{logro.titulo}</h4>
+                    <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{logro.descripcion}</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
@@ -3255,6 +3237,55 @@ function EstadoVacio({ mensaje }) {
       {mensaje}
     </div>
   )
+}
+
+// Asigna un badge visual legible a cada logro para reforzar el reconocimiento del deportista.
+function obtenerBadgeLogro(logro) {
+  const nivel = limpiarTextoVisual(logro?.nivel || '').toLowerCase()
+  const titulo = limpiarTextoVisual(logro?.titulo || '').toLowerCase()
+
+  if (titulo.includes('meta completada') || titulo.includes('completed goal')) {
+    return {
+      nombre: 'Meta cumplida',
+      icono: '??',
+      fondo: 'bg-[linear-gradient(135deg,#22d3ee,#2563eb)] text-white',
+      etiqueta: 'bg-cyan-400/12 text-cyan-200',
+    }
+  }
+
+  if (nivel.includes('diamante')) {
+    return {
+      nombre: 'Diamante',
+      icono: '??',
+      fondo: 'bg-[linear-gradient(135deg,#60a5fa,#7c3aed)] text-white',
+      etiqueta: 'bg-violet-400/12 text-violet-200',
+    }
+  }
+
+  if (nivel.includes('oro')) {
+    return {
+      nombre: 'Oro',
+      icono: '??',
+      fondo: 'bg-[linear-gradient(135deg,#fbbf24,#f59e0b)] text-slate-950',
+      etiqueta: 'bg-amber-400/12 text-amber-200',
+    }
+  }
+
+  if (nivel.includes('plata')) {
+    return {
+      nombre: 'Plata',
+      icono: '??',
+      fondo: 'bg-[linear-gradient(135deg,#e2e8f0,#94a3b8)] text-slate-950',
+      etiqueta: 'bg-slate-400/12 text-slate-200',
+    }
+  }
+
+  return {
+    nombre: 'Reconocimiento',
+    icono: '?',
+    fondo: 'bg-[linear-gradient(135deg,#f59e0b,#f97316)] text-white',
+    etiqueta: 'bg-orange-400/12 text-orange-200',
+  }
 }
 
 function ResumenAsignadoSimple({ titulo, vacio, items, render }) {
