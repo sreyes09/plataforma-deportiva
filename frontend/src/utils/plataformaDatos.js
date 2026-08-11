@@ -232,7 +232,7 @@ const coloresSerieTiempo = ['#22d3ee', '#f59e0b', '#38bdf8', '#fb7185', '#34d399
 const construirClaveSerie = (texto = '', indice = 0) => {
   const base = String(texto || '')
     .normalize('NFD')
-    .replace(/[Ì€-Í¯]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
@@ -427,4 +427,5 @@ export const obtenerOpcionesDeportistas = (datos) =>
     nombre: deportista.nombre,
     descripcion: `${deportista.correo}${deportista.disciplina ? ` Â· ${deportista.disciplina}` : ''}`,
   }))
+
 
