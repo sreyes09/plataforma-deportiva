@@ -345,16 +345,7 @@ function Tablero() {
               valor={idioma === 'es' ? t('Español', 'Spanish') : t('Inglés', 'English')}
               onClick={alternarIdioma}
             />
-            <div className="text-right">
-              <p className={`text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{t('Hola,', 'Hello,')} <span className={`font-semibold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{usuario.nombre}</span></p>
-              <p className="text-xs uppercase tracking-[0.25em] text-amber-400">
-                {rolTexto === t('deportista', 'athlete')
-                  ? t('Deportista', 'Athlete')
-                  : rolTexto === t('entrenador', 'coach')
-                    ? t('Entrenador', 'Coach')
-                    : t('Administrador', 'Administrator')}
-              </p>
-            </div>
+
             <BotonSecundario
               onClick={() => manejarExportacion('excel')}
               className={esOscuro
@@ -376,7 +367,16 @@ function Tablero() {
               className="border-rose-400/35 bg-rose-500/12 text-rose-100 hover:bg-rose-500/18"
             >
               {t('Cerrar sesión', 'Sign out')}
-            </BotonSecundario>
+            </BotonSecundario>            <div className="text-right">
+              <p className={`text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{t('Hola,', 'Hello,')} <span className={`font-semibold ${esOscuro ? 'text-white' : 'text-slate-900'}`}>{usuario.nombre}</span></p>
+              <p className="text-xs uppercase tracking-[0.25em] text-amber-400">
+                {rolTexto === t('deportista', 'athlete')
+                  ? t('Deportista', 'Athlete')
+                  : rolTexto === t('entrenador', 'coach')
+                    ? t('Entrenador', 'Coach')
+                    : t('Administrador', 'Administrator')}
+              </p>
+            </div>
           </div>
         </div>
       </nav>
@@ -3625,6 +3625,7 @@ function ListaEntrenadorAsignaciones({
 }
 
 export default Tablero
+
 
 
 
