@@ -289,7 +289,7 @@ function Inicio() {
             ),
       )
     } catch (err) {
-      setError(err.response?.data?.mensaje || t('Error al iniciar sesi?n.', 'Sign-in failed.'))
+      setError(err.response?.data?.mensaje || t('Error al iniciar sesión.', 'Sign-in failed.'))
     } finally {
       setCargando(false)
     }
@@ -413,8 +413,8 @@ function Inicio() {
               </h1>
               <h2 className={`mt-4 max-w-[24rem] text-4xl font-bold leading-tight md:text-5xl ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
                 {desafio
-                  ? t('Proteja su acceso aqui', 'Protect your access here')
-                  : t('Tu progreso comienza aqui', 'Your progress starts here')}
+                  ? t('Proteja su acceso aquí', 'Protect your access here')
+                  : t('Tu progreso comienza aquí', 'Your progress starts here')}
               </h2>
               <p className={`mt-6 max-w-[28rem] text-lg leading-8 md:text-xl ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
                 {desafio
@@ -442,13 +442,13 @@ function Inicio() {
             <TarjetaCaracteristica
               icono="grafico"
               titulo={t('Seguimiento', 'Tracking')}
-              descripcion={t('Estadisticas y sesiones reales.', 'Real stats and sessions.')}
+              descripcion={t('Estadísticas y sesiones reales.', 'Real stats and sessions.')}
               esOscuro={esOscuro}
             />
             <TarjetaCaracteristica
               icono="escudo"
               titulo={t('Seguridad 2FA', '2FA security')}
-              descripcion={t('Acceso protegido con doble verificacion.', 'Protected access with two-step verification.')}
+              descripcion={t('Acceso protegido con doble verificación.', 'Protected access with two-step verification.')}
               esOscuro={esOscuro}
             />
           </div>
@@ -465,15 +465,15 @@ function Inicio() {
                   <p className="text-xs uppercase tracking-[0.34em] text-cyan-300">VYROX</p>
                   <h2 className={`mt-1 text-3xl font-bold leading-tight ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
                     {desafio
-                      ? t('Verificaci?n segura', 'Secure verification')
-                      : t('Tu progreso comienza aqu?', 'Your progress starts here')}
+                      ? t('Verificación segura', 'Secure verification')
+                      : t('Tu progreso comienza aquí', 'Your progress starts here')}
                   </h2>
                 </div>
               </div>
               <p className={`mt-3 text-sm leading-7 ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
                 {desafio
-                  ? t('Ingresa el c?digo temporal y termina el acceso a tu cuenta deportiva.', 'Enter the temporary code to finish signing in to your sports account.')
-                  : t('Accede r?pido, ajusta tus preferencias y contin?a con tu seguimiento.', 'Access quickly, adjust your preferences and continue your tracking.')}
+                  ? t('Ingresa el código temporal y termina el acceso a tu cuenta deportiva.', 'Enter the temporary code to finish signing in to your sports account.')
+                  : t('Accede rápido, ajusta tus preferencias y continúa con tu seguimiento.', 'Access quickly, adjust your preferences and continue your tracking.')}
               </p>
             </div>
 

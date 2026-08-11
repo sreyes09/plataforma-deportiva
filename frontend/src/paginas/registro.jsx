@@ -151,7 +151,7 @@ function PanelVisual({ t, esOscuro }) {
             VYROX
           </h1>
           <h2 className={`mt-4 max-w-[26rem] text-4xl font-bold leading-tight md:text-5xl ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
-            {t('Tu progreso comienza aqui', 'Your progress starts here')}
+            {t('Tu progreso comienza aquí', 'Your progress starts here')}
           </h2>
           <p className={`mt-6 max-w-[28rem] text-lg leading-8 md:text-xl ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>
             {t(
@@ -227,13 +227,13 @@ function PanelVisual({ t, esOscuro }) {
             id: 'seguimiento',
             icono: 'grafico',
             titulo: t('Seguimiento', 'Tracking'),
-            descripcion: t('Estadisticas y sesiones reales', 'Real stats and sessions'),
+            descripcion: t('Estadísticas y sesiones reales', 'Real stats and sessions'),
           },
           {
             id: 'seguridad',
             icono: 'escudo',
             titulo: t('Seguridad 2FA', '2FA security'),
-            descripcion: t('Acceso protegido con doble verificacion', 'Protected access with two-step verification'),
+            descripcion: t('Acceso protegido con doble verificación', 'Protected access with two-step verification'),
           },
         ].map((item) => (
           <div
@@ -392,7 +392,7 @@ function Registro() {
                 <div>
                   <p className="text-xs uppercase tracking-[0.34em] text-cyan-300">VYROX</p>
                   <h2 className={`mt-1 text-3xl font-bold leading-tight ${esOscuro ? 'text-white' : 'text-slate-900'}`}>
-                    {t('Tu progreso comienza aqu?', 'Your progress starts here')}
+                    {t('Tu progreso comienza aquí', 'Your progress starts here')}
                   </h2>
                 </div>
               </div>
@@ -527,7 +527,7 @@ function Registro() {
                     onClick={() => navegar('/')}
                     className="font-semibold text-cyan-300 transition hover:text-cyan-200"
                   >
-                    {t('Iniciar sesion', 'Sign in')}
+                    {t('Iniciar sesión', 'Sign in')}
                   </button>
                   <div className={`h-px flex-1 ${esOscuro ? 'bg-white/8' : 'bg-slate-200'}`} />
                 </div>

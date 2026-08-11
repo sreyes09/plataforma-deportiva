@@ -96,7 +96,7 @@ const etiquetaEstadoVisible = (estado, t) => {
 // Genera las pestañas principales en el idioma activo para no duplicar el dashboard.
 const crearModulosDeportista = (t) => [
   { id: 'perfil', titulo: t('Perfil deportivo', 'Sports profile'), descripcion: t('Actualiza tus datos personales y disciplina.', 'Update your personal details and discipline.') },
-  { id: 'estadisticas', titulo: t('Estad?sticas', 'Statistics'), descripcion: t('Registra tu rendimiento individual.', 'Track your individual performance.') },
+  { id: 'estadisticas', titulo: t('Estadísticas', 'Statistics'), descripcion: t('Registra tu rendimiento individual.', 'Track your individual performance.') },
   { id: 'sesiones', titulo: t('Sesiones asignadas', 'Assigned sessions'), descripcion: t('Consulta entrenamientos indicados por tus entrenadores.', 'Review training sessions assigned by your coaches.') },
   { id: 'metas', titulo: t('Metas asignadas', 'Assigned goals'), descripcion: t('Revisa objetivos activos y su progreso.', 'Review active goals and progress.') },
   { id: 'competencias', titulo: t('Competencias asignadas', 'Assigned competitions'), descripcion: t('Mira los eventos que te corresponden.', 'See your assigned events.') },
@@ -253,7 +253,7 @@ function Tablero() {
         resumen,
         seriePrincipal: [
           { etiqueta: t('Deportistas', 'Athletes'), valor: resumen.deportistas, detalle: t('cuentas deportivas', 'athlete accounts') },
-          { etiqueta: t('Entrenadores', 'Coaches'), valor: resumen.entrenadores, detalle: t('cuentas t?cnicas', 'coach accounts') },
+          { etiqueta: t('Entrenadores', 'Coaches'), valor: resumen.entrenadores, detalle: t('cuentas técnicas', 'coach accounts') },
           { etiqueta: t('Activos', 'Active'), valor: resumen.activos, detalle: t('cuentas habilitadas', 'enabled accounts') },
         ],
         serieSecundaria: [
@@ -311,7 +311,7 @@ function Tablero() {
       serieSecundaria: distribucion.series,
       graficoPrincipal: {
         etiqueta: t('Rendimiento individual', 'Individual performance'),
-        titulo: datos.metas.length > 0 ? t('Porcentaje de avance por meta', 'Goal progress percentage') : t('Evoluci?n de estad?sticas', 'Statistics evolution'),
+        titulo: datos.metas.length > 0 ? t('Porcentaje de avance por meta', 'Goal progress percentage') : t('Evolución de estadísticas', 'Statistics evolution'),
         valorKey: 'valor',
         detalleKey: 'detalle',
         nombreValor: datos.metas.length > 0 ? t('Progreso', 'Progress') : t('Valor', 'Value'),
@@ -437,7 +437,7 @@ function Tablero() {
             <>
               <ResumenCard titulo={t('Usuarios', 'Users')} valor={contenido.resumen.usuarios} detalle={t('cuentas registradas', 'registered accounts')} />
               <ResumenCard titulo={t('Deportistas', 'Athletes')} valor={contenido.resumen.deportistas} detalle={t('usuarios del rendimiento', 'performance users')} />
-              <ResumenCard titulo={t('Entrenadores', 'Coaches')} valor={contenido.resumen.entrenadores} detalle={t('cuentas t?cnicas', 'technical accounts')} />
+              <ResumenCard titulo={t('Entrenadores', 'Coaches')} valor={contenido.resumen.entrenadores} detalle={t('cuentas técnicas', 'technical accounts')} />
               <ResumenCard titulo={t('Activos', 'Active')} valor={contenido.resumen.activos} detalle={t('${contenido.resumen.inactivos} inactivos', '${contenido.resumen.inactivos} inactive')} />
             </>
           ) : esEntrenador ? (
@@ -449,7 +449,7 @@ function Tablero() {
             </>
           ) : (
             <>
-              <ResumenCard titulo={t('Estad?sticas', 'Statistics')} valor={contenido.resumen.estadisticas} detalle={t('registros personales', 'personal records')} />
+              <ResumenCard titulo={t('Estadísticas', 'Statistics')} valor={contenido.resumen.estadisticas} detalle={t('registros personales', 'personal records')} />
               <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t('asignadas por entrenadores', 'assigned by coaches')} />
               <ResumenCard titulo={t('Metas', 'Goals')} valor={contenido.resumen.metas} detalle={t('${contenido.resumen.metasCompletadas} completadas', '${contenido.resumen.metasCompletadas} completed')} />
               <ResumenCard titulo={t('Competencias', 'Competitions')} valor={contenido.resumen.competencias} detalle={t('eventos asignados', 'assigned events')} />
@@ -467,7 +467,7 @@ function Tablero() {
 
               <div className="h-64">
                 {contenido.seriePrincipal.length === 0 ? (
-                  <EstadoVacio mensaje={t('Todav?a no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
+                  <EstadoVacio mensaje={t('Todavía no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={contenido.seriePrincipal}>
@@ -504,7 +504,7 @@ function Tablero() {
 
               <div className="h-64">
                 {contenido.serieSecundaria.length === 0 ? (
-                  <EstadoVacio mensaje={t('A?n no hay metas suficientes para construir esta gr?fica.', 'There are not enough goals yet to build this chart.')} />
+                  <EstadoVacio mensaje={t('Aún no hay metas suficientes para construir esta gráfica.', 'There are not enough goals yet to build this chart.')} />
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -623,7 +623,7 @@ function Tablero() {
               </div>
               <div className="h-56">
                 {contenido.seriePrincipal.length === 0 ? (
-                  <EstadoVacio mensaje={t('Todav?a no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
+                  <EstadoVacio mensaje={t('Todavía no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={contenido.seriePrincipal}>
@@ -655,7 +655,7 @@ function Tablero() {
               </div>
               <div className="h-56">
                 {contenido.serieSecundaria.length === 0 ? (
-                  <EstadoVacio mensaje={t('A?n no hay metas suficientes para construir esta gr?fica.', 'There are not enough goals yet to build this chart.')} />
+                  <EstadoVacio mensaje={t('Aún no hay metas suficientes para construir esta gráfica.', 'There are not enough goals yet to build this chart.')} />
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -811,7 +811,7 @@ const deseleccionarEstadisticasVisibles = () => {
       {
         etiqueta: t('Registros cargados', 'Records logged'),
         valor: totalRegistros,
-        detalle: t('estad?sticas guardadas', 'saved statistics'),
+        detalle: t('estadísticas guardadas', 'saved statistics'),
       },
       {
         etiqueta: t('Volumen acumulado', 'Accumulated volume'),
@@ -1274,7 +1274,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
           {datos.estadisticas.length === 0 ? (
             <EstadoVacio mensaje={t('Todavía no has registrado estadisticas personales.', 'You have not recorded personal statistics yet.')} />
           ) : estadisticasFiltradas.length === 0 ? (
-            <EstadoVacio mensaje={t('No hay estadisticas que coincidan con los filtros seleccionados.', 'There are no statistics that match the selected filters.')} />
+            <EstadoVacio mensaje={t('No hay estadísticas que coincidan con los filtros seleccionados.', 'There are no statistics that match the selected filters.')} />
           ) : (
             estadisticasFiltradas.map((item) => {
               const indiceOriginal = datos.estadisticas.indexOf(item)
@@ -1389,7 +1389,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
           <>
             <div>
               <h4 className="font-semibold">{sesion.tipo}</h4>
-              <p className="mt-1 text-sm text-slate-300">{sesion.descripcion || t('Sin descripcion adicional.', 'No additional description.')}</p>
+              <p className="mt-1 text-sm text-slate-300">{sesion.descripcion || t('Sin descripci?n adicional.', 'No additional description.')}</p>
               <p className="mt-2 text-xs uppercase tracking-[0.2em] text-cyan-300">{sesion.entrenadorNombre}</p>
             </div>
             <div className="text-right">
@@ -1413,7 +1413,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h4 className="font-semibold">{meta.titulo}</h4>
-                <p className="mt-1 text-sm text-slate-300">{meta.descripcion || t('Sin descripcion adicional.', 'No additional description.')}</p>
+                <p className="mt-1 text-sm text-slate-300">{meta.descripcion || t('Sin descripci?n adicional.', 'No additional description.')}</p>
                 <p className="mt-2 text-xs uppercase tracking-[0.2em] text-cyan-300">{meta.entrenadorNombre}</p>
               </div>
               <div className="text-right">
@@ -1523,7 +1523,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
       <h3 className="mt-2 text-2xl font-semibold">{t('Logros del deportista', 'Athlete achievements')}</h3>
       {datos.logros.length === 0 && ranking.length === 0 ? (
         <div className="mt-6">
-          <EstadoVacio mensaje={t('Tus logros apareceran aqui cuando completes metas o acumules avances relevantes.', 'Your achievements will appear here when you complete goals or accumulate meaningful progress.')} />
+          <EstadoVacio mensaje={t('Tus logros aparecerán aquí cuando completes metas o acumules avances relevantes.', 'Your achievements will appear here when you complete goals or accumulate meaningful progress.')} />
         </div>
       ) : (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -1660,13 +1660,13 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
           <div className="grid gap-3 md:grid-cols-2">
             <ResumenAsignadoSimple
               titulo={t('Usuarios activos', 'Active users')}
-              vacio={t('A?n no hay usuarios activos para mostrar.', 'There are no active users to show yet.')}
+              vacio={t('Aún no hay usuarios activos para mostrar.', 'There are no active users to show yet.')}
               items={usuariosAdminVisibles.filter((item) => item.estado === 'activo').slice(0, 4)}
               render={(item) => `${item.nombreCompleto} · ${etiquetaRolVisible(item.rol, t)}`}
             />
             <ResumenAsignadoSimple
               titulo={t('Actividad reciente', 'Recent activity')}
-              vacio={t('A?n no hay actividad suficiente para mostrar.', 'There is not enough activity to show yet.')}
+              vacio={t('Aún no hay actividad suficiente para mostrar.', 'There is not enough activity to show yet.')}
               items={actividadDestacada.slice(0, 4)}
               render={(item) => `${item.nombreCompleto} · ${item.resumen?.estadisticas || 0} stats`}
             />
@@ -1833,7 +1833,7 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
                   </div>
                 </div>
                 <div className={`mt-4 grid gap-3 border-t pt-4 md:grid-cols-4 ${esOscuro ? 'border-white/8' : 'border-slate-200'}`}>
-                  <MiniDatoAdmin titulo={t('Estad?sticas', 'Statistics')} valor={item.resumen?.estadisticas || 0} />
+                  <MiniDatoAdmin titulo={t('Estadísticas', 'Statistics')} valor={item.resumen?.estadisticas || 0} />
                   <MiniDatoAdmin titulo={t('Metas', 'Goals')} valor={item.resumen?.metas || 0} />
                   <MiniDatoAdmin titulo={t('Sesiones', 'Sessions')} valor={item.resumen?.sesiones || 0} />
                   <MiniDatoAdmin titulo={t('Competencias', 'Competitions')} valor={item.resumen?.competencias || 0} />
@@ -1869,7 +1869,7 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
         <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-cyan-300' : 'text-cyan-800'}`}>{t('Actividad destacada', 'Highlighted activity')}</p>
         <div className="mt-4 space-y-3">
           {actividadDestacada.length === 0 ? (
-            <EstadoVacio mensaje={t('A?n no hay actividad suficiente para construir esta vista.', 'There is not enough activity to build this view yet.')} />
+            <EstadoVacio mensaje={t('Aún no hay actividad suficiente para construir esta vista.', 'There is not enough activity to build this view yet.')} />
           ) : (
             actividadDestacada.map((item) => (
               <div key={item.id} className={`rounded-2xl border px-4 py-3 ${esOscuro ? 'border-white/8 bg-slate-950/45' : 'border-slate-200 bg-slate-50'}`}>
@@ -1891,7 +1891,7 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
       <div className={`rounded-[28px] border p-5 ${esOscuro ? 'border-white/8 bg-white/5' : 'border-cyan-200 bg-white shadow-[0_18px_34px_rgba(14,116,144,0.12)]'}`}>
         <p className={`text-sm uppercase tracking-[0.3em] ${esOscuro ? 'text-amber-300' : 'text-amber-700'}`}>{t('Volumen general', 'General volume')}</p>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <MiniDatoAdmin titulo={t('Estadisticas globales', 'Global statistics')} valor={datos.resumenAdmin?.estadisticas || 0} amplio />
+          <MiniDatoAdmin titulo={t('Estadísticas globales', 'Global statistics')} valor={datos.resumenAdmin?.estadisticas || 0} amplio />
           <MiniDatoAdmin titulo={t('Metas globales', 'Global goals')} valor={datos.resumenAdmin?.metas || 0} amplio />
           <MiniDatoAdmin titulo={t('Sesiones globales', 'Global sessions')} valor={datos.resumenAdmin?.sesiones || 0} amplio />
           <MiniDatoAdmin titulo={t('Competencias globales', 'Global competitions')} valor={datos.resumenAdmin?.competencias || 0} amplio />
@@ -2469,7 +2469,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             </div>
           )}
           {deportistasFiltrados.length === 0 ? (
-            <EstadoVacio mensaje={t('Aun no tienes deportistas vinculados. Registre primero sus cuentas y luego agréguelos por correo.', 'You do not have linked athletes yet. Register their accounts first and then add them by email.')} />
+            <EstadoVacio mensaje={t('Aún no tienes deportistas vinculados. Registre primero sus cuentas y luego agréguelos por correo.', 'You do not have linked athletes yet. Register their accounts first and then add them by email.')} />
           ) : (
             deportistasFiltrados.map((deportista) => (
               <div
@@ -2658,13 +2658,13 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           onDeseleccionarTodos={() => deseleccionarIdsVisibles(setSesionesSeleccionadas, idsSesionesVisibles)}
           accionMasiva={<button type="button" disabled={!sesionesSeleccionadas.length} onClick={eliminarSesionesSeleccionadas} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${sesionesSeleccionadas.length ? (esOscuro ? 'border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22' : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110') : (esOscuro ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500' : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}>{t('Eliminar seleccionadas', 'Delete selected')}</button>}
           titulo={t('Sesiones creadas', 'Created sessions')}
-          vacio={t('No hay sesiones creadas todav?a.', 'There are no created sessions yet.')}
+          vacio={t('No hay sesiones creadas todavía.', 'There are no created sessions yet.')}
           items={sesionesFiltradas}
           renderItem={(sesion) => (
             <div className="flex w-full flex-wrap items-start justify-between gap-4">
               <div>
                 <h4 className="font-semibold">{sesion.tipo}</h4>
-                <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{sesion.descripcion || t('Sin descripcion adicional.', 'No additional description.')}</p>
+                <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{sesion.descripcion || t('Sin descripci?n adicional.', 'No additional description.')}</p>
                 <p className={`mt-2 text-sm font-medium ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{(sesion.asignadoNombres || []).join(', ')}</p>
               </div>
               <div className="text-right">
@@ -2907,14 +2907,14 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           onDeseleccionarTodos={() => deseleccionarIdsVisibles(setMetasSeleccionadas, idsMetasVisibles)}
           accionMasiva={<button type="button" disabled={!metasSeleccionadas.length} onClick={eliminarMetasSeleccionadas} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${metasSeleccionadas.length ? (esOscuro ? 'border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22' : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110') : (esOscuro ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500' : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}>{t('Eliminar seleccionadas', 'Delete selected')}</button>}
           titulo="Metas creadas"
-          vacio={t('No hay metas asignadas todav?a.', 'There are no assigned goals yet.')}
+          vacio={t('No hay metas asignadas todavía.', 'There are no assigned goals yet.')}
           items={metasFiltradas}
           renderItem={(meta) => (
             <div className="w-full">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <h4 className="font-semibold">{meta.titulo}</h4>
-                  <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{meta.descripcion || t('Sin descripcion adicional.', 'No additional description.')}</p>
+                  <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{meta.descripcion || t('Sin descripci?n adicional.', 'No additional description.')}</p>
                   <p className={`mt-2 text-sm font-medium ${esOscuro ? 'text-cyan-300' : 'text-cyan-700'}`}>{(meta.asignadoNombres || []).join(', ')}</p>
                 </div>
                 <div className="text-right">
@@ -3079,7 +3079,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           onDeseleccionarTodos={() => deseleccionarIdsVisibles(setCompetenciasSeleccionadas, idsCompetenciasVisibles)}
           accionMasiva={<button type="button" disabled={!competenciasSeleccionadas.length} onClick={eliminarCompetenciasSeleccionadas} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${competenciasSeleccionadas.length ? (esOscuro ? 'border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22' : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110') : (esOscuro ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500' : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}>{t('Eliminar seleccionadas', 'Delete selected')}</button>}
           titulo={t('Competencias creadas', 'Created competitions')}
-          vacio={t('No hay competencias creadas todav?a.', 'There are no created competitions yet.')}
+          vacio={t('No hay competencias creadas todavía.', 'There are no created competitions yet.')}
           items={competenciasFiltradas}
           renderItem={(competencia) => (
             <div className="flex w-full flex-wrap items-start justify-between gap-4">
@@ -3241,7 +3241,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
         onDeseleccionarTodos={() => deseleccionarIdsVisibles(setObservacionesSeleccionadas, idsObservacionesVisibles)}
         accionMasiva={<button type="button" disabled={!observacionesSeleccionadas.length} onClick={eliminarObservacionesSeleccionadas} className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${observacionesSeleccionadas.length ? (esOscuro ? 'border-rose-400/30 bg-rose-400/12 text-rose-100 hover:bg-rose-400/22' : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110') : (esOscuro ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500' : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}>{t('Eliminar seleccionadas', 'Delete selected')}</button>}
         titulo={t('Observaciones registradas', 'Saved observations')}
-        vacio={t('No hay observaciones registradas todav?a.', 'There are no saved observations yet.')}
+        vacio={t('No hay observaciones registradas todavía.', 'There are no saved observations yet.')}
         items={observacionesFiltradas}
         renderItem={(observacion) => (
           <div className="w-full">
@@ -3371,7 +3371,7 @@ function SelectorFotoPerfil({ nombreArchivo, fotoActual, onSeleccionar, ayuda = 
     ? nombreArchivo
     : fotoActual
       ? t('Imagen lista para guardar', 'Image ready to save')
-      : t('A?n no has seleccionado una imagen.', 'You have not selected an image yet.')
+      : t('Aún no has seleccionado una imagen.', 'You have not selected an image yet.')
 
   return (
     <div>
