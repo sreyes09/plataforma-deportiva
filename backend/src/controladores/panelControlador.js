@@ -768,7 +768,7 @@ const actualizarPanel = async (req, res) => {
 const vincularDeportista = async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuario.id);
-    const correo = req.body?.correo?.trim()?.toLowerCase();
+    const correo = String(req.body?.correo || '').trim().toLowerCase();
 
     if (!usuario || obtenerRolSeguro(usuario.rol) !== 'entrenador') {
       return res.status(403).json({ mensaje: 'Solo los entrenadores pueden vincular deportistas' });
@@ -784,30 +784,46 @@ const vincularDeportista = async (req, res) => {
       return res.status(404).json({ mensaje: 'No existe un deportista registrado con ese correo' });
     }
 
-    const panelEntrenador = await obtenerPanelBase(usuario);
-
-    const yaVinculado = panelEntrenador.deportistas.some(
-      (item) => item.deportistaId.toString() === deportista._id.toString()
-    );
-
-    if (yaVinculado) {
-      return res.status(400).json({ mensaje: 'Ese deportista ya esta vinculado a tu panel' });
+    if (deportista._id.toString() === usuario._id.toString()) {
+      return res.status(400).json({ mensaje: 'No puedes vincular tu propia cuenta como deportista' });
     }
 
-    const panelDeportista = await obtenerPanelBase(deportista);
+    let panelEntrenador = await Panel.findOne({ usuarioId: usuario._id });
+    if (!panelEntrenador) {
+      panelEntrenador = await Panel.create(crearPanelBase(usuario));
+    }
+    panelEntrenador = await migrarPanel(panelEntrenador, usuario);
+
+    const yaVinculado = (panelEntrenador.deportistas || []).some((item) => {
+      const referenciaId = item.deportistaId?.toString?.() || item.id?.toString?.() || '';
+      const referenciaCorreo = String(item.correo || '').trim().toLowerCase();
+      return referenciaId === deportista._id.toString() || referenciaCorreo === correo;
+    });
+
+    if (yaVinculado) {
+      return res.status(400).json({ mensaje: 'Ese deportista ya est? vinculado a tu panel' });
+    }
+
+    let panelDeportista = await Panel.findOne({ usuarioId: deportista._id });
+    if (!panelDeportista) {
+      panelDeportista = await Panel.create(crearPanelBase(deportista));
+    }
+    panelDeportista = await migrarPanel(panelDeportista, deportista);
 
     panelEntrenador.deportistas.push({
       deportistaId: deportista._id,
-      nombre: `${deportista.nombre} ${deportista.apellidos}`,
+      nombre: `${deportista.nombre} ${deportista.apellidos}`.trim(),
       correo: deportista.correo,
       disciplina: panelDeportista.perfil?.disciplina || '',
-      progreso: panelDeportista.estadisticas.length,
+      progreso: Array.isArray(panelDeportista.estadisticas) ? panelDeportista.estadisticas.length : 0,
       metaActiva: '',
     });
 
+    panelEntrenador.markModified('deportistas');
     await panelEntrenador.save();
 
-    return res.status(201).json(await normalizarPanelEntrenador(panelEntrenador));
+    const panelEntrenadorActualizado = await Panel.findOne({ usuarioId: usuario._id });
+    return res.status(201).json(await normalizarPanelEntrenador(panelEntrenadorActualizado));
   } catch (error) {
     return res.status(500).json({ mensaje: 'Error al vincular deportista', error: error.message });
   }
