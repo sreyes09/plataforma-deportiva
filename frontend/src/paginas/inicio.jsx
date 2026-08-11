@@ -289,7 +289,7 @@ function Inicio() {
             ),
       )
     } catch (err) {
-      setError(err.response?.data?.mensaje || t('Error al iniciar sesion.', 'Sign-in failed.'))
+      setError(err.response?.data?.mensaje || t('Error al iniciar sesi?n.', 'Sign-in failed.'))
     } finally {
       setCargando(false)
     }
