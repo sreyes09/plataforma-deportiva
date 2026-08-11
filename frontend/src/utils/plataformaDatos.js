@@ -1,4 +1,4 @@
-// Utilidad visual para mostrar fechas cortas en tarjetas y graficos.
+﻿// Utilidad visual para mostrar fechas cortas en tarjetas y graficos.
 const formatearFecha = (fecha) =>
   new Intl.DateTimeFormat('es-CR', {
     day: '2-digit',
@@ -232,7 +232,7 @@ const coloresSerieTiempo = ['#22d3ee', '#f59e0b', '#38bdf8', '#fb7185', '#34d399
 const construirClaveSerie = (texto = '', indice = 0) => {
   const base = String(texto || '')
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[Ì€-Í¯]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
@@ -378,9 +378,53 @@ export const construirPorcentajeMetasEntrenador = (datos) => {
   }
 }
 
+export const construirSerieDeportista = (datos) => {
+  if ((datos.metas || []).length > 0) {
+    return (datos.metas || []).map((meta) => ({
+      etiqueta: recortarEtiqueta(meta.titulo || meta.metrica || 'Meta', 20),
+      valor: convertirPorcentaje(meta.progreso, meta.objetivo),
+      detalle: `${convertirNumero(meta.progreso)}/${convertirNumero(meta.objetivo)}`,
+    }))
+  }
+
+  const acumulado = new Map()
+  ;(datos.estadisticas || []).forEach((item) => {
+    const nombre = recortarEtiqueta(item.metrica || item.disciplina || 'Registro', 20)
+    acumulado.set(nombre, (acumulado.get(nombre) || 0) + convertirNumero(item.valor))
+  })
+
+  return Array.from(acumulado.entries()).map(([etiqueta, valor]) => ({
+    etiqueta,
+    valor,
+    detalle: 'Acumulado',
+  }))
+}
+
+export const construirResumenCoach = (datos) =>
+  (datos.deportistas || []).map((deportista) => {
+    const asignaciones = (datos.metas || []).flatMap((meta) =>
+      (meta.asignaciones || []).filter((asignacion) => asignacion.deportistaId === deportista.id)
+    )
+
+    const porcentaje = asignaciones.length
+      ? Math.round(
+          asignaciones.reduce(
+            (acum, asignacion) => acum + convertirPorcentaje(asignacion.progreso, asignacion.objetivo),
+            0,
+          ) / asignaciones.length,
+        )
+      : 0
+
+    return {
+      etiqueta: recortarEtiqueta(construirNombreVisible(deportista.nombre), 20),
+      valor: porcentaje,
+      detalle: `${asignaciones.length} metas`,
+    }
+  })
 export const obtenerOpcionesDeportistas = (datos) =>
   datos.deportistas.map((deportista) => ({
     id: deportista.id,
     nombre: deportista.nombre,
-    descripcion: `${deportista.correo}${deportista.disciplina ? ` · ${deportista.disciplina}` : ''}`,
+    descripcion: `${deportista.correo}${deportista.disciplina ? ` Â· ${deportista.disciplina}` : ''}`,
   }))
+
