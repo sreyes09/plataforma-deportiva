@@ -1365,17 +1365,20 @@ const eliminarEstadisticasSeleccionadas = async () => {
       ) : (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {datos.logros.map((logro) => {
-            const badge = obtenerBadgeLogro(logro)
+            const badge = obtenerBadgeLogro(logro, t)
+            const porcentajeLogro = Number(logro.porcentaje) || 0
+            const porcentajeVisible = Math.max(0, Math.min(200, porcentajeLogro))
 
             return (
               <div
                 key={logro.id}
-                className={`rounded-[26px] border p-5 ${esOscuro
-                  ? 'border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.82),rgba(15,23,42,0.64))]'
-                  : 'border-amber-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,251,235,0.94))] shadow-[0_18px_34px_rgba(245,158,11,0.12)]'}`}
+                className={`relative overflow-hidden rounded-[28px] border p-5 ${esOscuro
+                  ? 'border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.88),rgba(15,23,42,0.7))] shadow-[0_24px_48px_rgba(2,6,23,0.34)]'
+                  : 'border-amber-200 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(255,251,235,0.96))] shadow-[0_18px_34px_rgba(245,158,11,0.14)]'}`}
               >
+                <div className={`pointer-events-none absolute inset-x-5 top-0 h-1 rounded-full ${badge.brillo}`} />
                 <div className="flex items-start gap-4">
-                  <div className={`flex h-16 w-16 items-center justify-center rounded-2xl text-3xl shadow-[0_12px_24px_rgba(15,23,42,0.18)] ${badge.fondo}`}>
+                  <div className={`flex h-18 w-18 shrink-0 items-center justify-center rounded-[22px] border text-4xl shadow-[0_16px_28px_rgba(15,23,42,0.18)] ${badge.fondo} ${badge.borde}`}>
                     <span aria-hidden="true">{badge.icono}</span>
                   </div>
                   <div className="flex-1">
@@ -1386,9 +1389,28 @@ const eliminarEstadisticasSeleccionadas = async () => {
                       <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'border border-cyan-300 bg-white text-cyan-800 shadow-[0_8px_18px_rgba(34,211,238,0.14)]'}`}>
                         {limpiarTextoVisual(logro.nivel || t('Logro', 'Achievement'))}
                       </span>
+                      <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${esOscuro ? 'bg-amber-400/12 text-amber-200' : 'border border-amber-300 bg-white text-amber-700 shadow-[0_8px_18px_rgba(245,158,11,0.16)]'}`}>
+                        {porcentajeLogro}% {t('cumplido', 'completed')}
+                      </span>
                     </div>
                     <h4 className="mt-3 text-xl font-semibold">{logro.titulo}</h4>
                     <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{logro.descripcion}</p>
+                    <p className={`mt-3 text-xs font-medium uppercase tracking-[0.22em] ${esOscuro ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {badge.descripcion}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-[0.2em]">
+                    <span className={esOscuro ? 'text-slate-400' : 'text-slate-500'}>{t('Avance del badge', 'Badge progress')}</span>
+                    <span className={esOscuro ? 'text-white' : 'text-slate-900'}>{porcentajeLogro}%</span>
+                  </div>
+                  <div className={`h-3 overflow-hidden rounded-full ${esOscuro ? 'bg-white/10' : 'bg-slate-200'}`}>
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${badge.brillo}`}
+                      style={{ width: `${Math.min(100, porcentajeVisible)}%` }}
+                    />
                   </div>
                 </div>
               </div>
@@ -3423,51 +3445,66 @@ function EstadoVacio({ mensaje }) {
 }
 
 // Asigna un badge visual legible a cada logro para reforzar el reconocimiento del deportista.
-function obtenerBadgeLogro(logro) {
+function obtenerBadgeLogro(logro, t) {
   const nivel = limpiarTextoVisual(logro?.nivel || '').toLowerCase()
   const titulo = limpiarTextoVisual(logro?.titulo || '').toLowerCase()
 
-  if (titulo.includes('meta completada') || titulo.includes('completed goal')) {
-    return {
-      nombre: 'Meta cumplida',
-      icono: '??',
-      fondo: 'bg-[linear-gradient(135deg,#22d3ee,#2563eb)] text-white',
-      etiqueta: 'bg-cyan-400/12 text-cyan-200',
-    }
-  }
-
   if (nivel.includes('diamante')) {
     return {
-      nombre: 'Diamante',
-      icono: '??',
+      nombre: t('Diamante', 'Diamond'),
+      icono: '💎',
       fondo: 'bg-[linear-gradient(135deg,#60a5fa,#7c3aed)] text-white',
+      borde: 'border-white/20',
+      brillo: 'bg-[linear-gradient(90deg,#60a5fa,#8b5cf6)]',
       etiqueta: 'bg-violet-400/12 text-violet-200',
+      descripcion: t('Rendimiento sobresaliente por encima del objetivo.', 'Outstanding performance above the target.'),
     }
   }
 
   if (nivel.includes('oro')) {
     return {
-      nombre: 'Oro',
-      icono: '??',
+      nombre: t('Oro', 'Gold'),
+      icono: '🥇',
       fondo: 'bg-[linear-gradient(135deg,#fbbf24,#f59e0b)] text-slate-950',
+      borde: 'border-amber-100/70',
+      brillo: 'bg-[linear-gradient(90deg,#fbbf24,#f59e0b)]',
       etiqueta: 'bg-amber-400/12 text-amber-200',
+      descripcion: t('Meta superada con un margen notable.', 'Goal exceeded with a remarkable margin.'),
     }
   }
 
   if (nivel.includes('plata')) {
     return {
-      nombre: 'Plata',
-      icono: '??',
+      nombre: t('Plata', 'Silver'),
+      icono: '🥈',
       fondo: 'bg-[linear-gradient(135deg,#e2e8f0,#94a3b8)] text-slate-950',
+      borde: 'border-slate-100/70',
+      brillo: 'bg-[linear-gradient(90deg,#cbd5e1,#94a3b8)]',
       etiqueta: 'bg-slate-400/12 text-slate-200',
+      descripcion: t('Objetivo completado con constancia.', 'Goal completed with consistency.'),
+    }
+  }
+
+  if (titulo.includes('meta completada') || titulo.includes('completed goal')) {
+    return {
+      nombre: t('Meta cumplida', 'Goal achieved'),
+      icono: '🏅',
+      fondo: 'bg-[linear-gradient(135deg,#22d3ee,#2563eb)] text-white',
+      borde: 'border-cyan-100/30',
+      brillo: 'bg-[linear-gradient(90deg,#22d3ee,#2563eb)]',
+      etiqueta: 'bg-cyan-400/12 text-cyan-200',
+      descripcion: t('Reconocimiento por cerrar una meta asignada.', 'Recognition for completing an assigned goal.'),
     }
   }
 
   return {
-    nombre: 'Reconocimiento',
-    icono: '?',
+    nombre: t('Reconocimiento', 'Recognition'),
+    icono: '🏆',
     fondo: 'bg-[linear-gradient(135deg,#f59e0b,#f97316)] text-white',
+    borde: 'border-orange-100/30',
+    brillo: 'bg-[linear-gradient(90deg,#f59e0b,#f97316)]',
     etiqueta: 'bg-orange-400/12 text-orange-200',
+    descripcion: t('Logro destacado dentro de tu progreso deportivo.', 'Highlighted achievement within your sports progress.'),
   }
 }
 
