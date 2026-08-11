@@ -37,6 +37,80 @@ import panelServicio from '../servicios/panelServicio'
 // Paleta visual reutilizada por los graficos del tablero.
 const coloresGrafico = ['#22d3ee', '#f59e0b', '#38bdf8', '#fb7185']
 
+// Convierte una serie plana en segmentos lineales para dibujar un grafico sin barras.
+const construirSegmentosLineales = (serie = [], valorKey = 'valor') => {
+  const datos = serie.map((item) => ({
+    etiqueta: item.etiqueta,
+    detalle: item.detalle,
+    valor: Number(item?.[valorKey]) || 0,
+  }))
+
+  if (datos.length === 0) {
+    return { datos: [], segmentos: [] }
+  }
+
+  if (datos.length === 1) {
+    const key = 'segmento_0'
+    datos[0][key] = datos[0].valor
+    return {
+      datos,
+      segmentos: [{ key, color: coloresGrafico[0], nombre: datos[0].etiqueta }],
+    }
+  }
+
+  const segmentos = []
+  for (let indice = 0; indice < datos.length - 1; indice += 1) {
+    const key = `segmento_${indice}`
+    datos[indice][key] = datos[indice].valor
+    datos[indice + 1][key] = datos[indice + 1].valor
+    segmentos.push({
+      key,
+      color: coloresGrafico[indice % coloresGrafico.length],
+      nombre: datos[indice].etiqueta,
+    })
+  }
+
+  return { datos, segmentos }
+}
+
+function GraficoLinealColorido({ serie, grafico }) {
+  const { datos, segmentos } = construirSegmentosLineales(serie, grafico.valorKey)
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={datos} margin={{ top: 10, right: 18, left: 0, bottom: 8 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+        <XAxis dataKey="etiqueta" stroke="#cbd5e1" />
+        <YAxis
+          stroke="#cbd5e1"
+          domain={grafico.limitePorcentaje ? [0, 100] : ['auto', 'auto']}
+          allowDecimals={false}
+        />
+        <Tooltip
+          formatter={(valor, _, item) => {
+            const detalle = item?.payload?.detalle ? ` (${item.payload.detalle})` : ''
+            return `${valor}${grafico.sufijoValor}${detalle}`
+          }}
+          labelFormatter={(label) => label}
+        />
+        {segmentos.map((segmento) => (
+          <Line
+            key={segmento.key}
+            type="monotone"
+            dataKey={segmento.key}
+            stroke={segmento.color}
+            strokeWidth={4}
+            dot={{ r: 5, fill: segmento.color, stroke: '#0f172a', strokeWidth: 2 }}
+            activeDot={{ r: 7, fill: segmento.color, stroke: '#e2e8f0', strokeWidth: 2 }}
+            connectNulls={false}
+            isAnimationActive={false}
+          />
+        ))}
+      </LineChart>
+    </ResponsiveContainer>
+  )
+}
+
 // Normaliza textos para que las busquedas ignoren mayusculas y tildes.
 const normalizarTexto = (valor = '') =>
   String(valor)
@@ -438,20 +512,20 @@ function Tablero() {
               <ResumenCard titulo={t('Usuarios', 'Users')} valor={contenido.resumen.usuarios} detalle={t('cuentas registradas', 'registered accounts')} />
               <ResumenCard titulo={t('Deportistas', 'Athletes')} valor={contenido.resumen.deportistas} detalle={t('usuarios del rendimiento', 'performance users')} />
               <ResumenCard titulo={t('Entrenadores', 'Coaches')} valor={contenido.resumen.entrenadores} detalle={t('cuentas técnicas', 'technical accounts')} />
-              <ResumenCard titulo={t('Activos', 'Active')} valor={contenido.resumen.activos} detalle={t('${contenido.resumen.inactivos} inactivos', '${contenido.resumen.inactivos} inactive')} />
+              <ResumenCard titulo={t('Activos', 'Active')} valor={contenido.resumen.activos} detalle={t(`${contenido.resumen.inactivos} inactivos`, `${contenido.resumen.inactivos} inactive`)} />
             </>
           ) : esEntrenador ? (
             <>
               <ResumenCard titulo={t('Deportistas', 'Athletes')} valor={contenido.resumen.deportistas} detalle={t('cuentas vinculadas', 'linked accounts')} />
-              <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t('${contenido.resumen.sesionesPendientes} pendientes', '${contenido.resumen.sesionesPendientes} pending')} />
+              <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t(`${contenido.resumen.sesionesPendientes} pendientes`, `${contenido.resumen.sesionesPendientes} pending`)} />
               <ResumenCard titulo={t('Alertas', 'Alerts')} valor={contenido.resumen.alertas} detalle={t('observaciones prioritarias', 'priority observations')} />
-              <ResumenCard titulo={t('Competencias', 'Competitions')} valor={contenido.resumen.competencias} detalle={t('${contenido.resumen.promedioProgreso}% progreso promedio', '${contenido.resumen.promedioProgreso}% average progress')} />
+              <ResumenCard titulo={t('Competencias', 'Competitions')} valor={contenido.resumen.competencias} detalle={t(`${contenido.resumen.promedioProgreso}% progreso promedio`, `${contenido.resumen.promedioProgreso}% average progress`)} />
             </>
           ) : (
             <>
               <ResumenCard titulo={t('Estadísticas', 'Statistics')} valor={contenido.resumen.estadisticas} detalle={t('registros personales', 'personal records')} />
               <ResumenCard titulo={t('Sesiones', 'Sessions')} valor={contenido.resumen.sesiones} detalle={t('asignadas por entrenadores', 'assigned by coaches')} />
-              <ResumenCard titulo={t('Metas', 'Goals')} valor={contenido.resumen.metas} detalle={t('${contenido.resumen.metasCompletadas} completadas', '${contenido.resumen.metasCompletadas} completed')} />
+              <ResumenCard titulo={t('Metas', 'Goals')} valor={contenido.resumen.metas} detalle={t(`${contenido.resumen.metasCompletadas} completadas`, `${contenido.resumen.metasCompletadas} completed`)} />
               <ResumenCard titulo={t('Competencias', 'Competitions')} valor={contenido.resumen.competencias} detalle={t('eventos asignados', 'assigned events')} />
             </>
           )}
@@ -469,29 +543,7 @@ function Tablero() {
                 {contenido.seriePrincipal.length === 0 ? (
                   <EstadoVacio mensaje={t('Todavía no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
                 ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={contenido.seriePrincipal}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="etiqueta" stroke="#cbd5e1" />
-                      <YAxis
-                        stroke="#cbd5e1"
-                        domain={contenido.graficoPrincipal.limitePorcentaje ? [0, 100] : ['auto', 'auto']}
-                        allowDecimals={false}
-                      />
-                      <Tooltip
-                        formatter={(valor, _, item) => {
-                          const detalle = item?.payload?.detalle ? ' (${item.payload.detalle})' : ''
-                          return '${valor}${contenido.graficoPrincipal.sufijoValor}${detalle}'
-                        }}
-                        labelFormatter={(label) => label}
-                      />
-                      <Bar dataKey={contenido.graficoPrincipal.valorKey} radius={[10, 10, 0, 0]}>
-                        {contenido.seriePrincipal.map((item, indice) => (
-                          <Cell key={'${item.etiqueta}-${indice}'} fill={coloresGrafico[indice % coloresGrafico.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <GraficoLinealColorido serie={contenido.seriePrincipal} grafico={contenido.graficoPrincipal} />
                 )}
               </div>
             </Panel>
@@ -625,25 +677,7 @@ function Tablero() {
                 {contenido.seriePrincipal.length === 0 ? (
                   <EstadoVacio mensaje={t('Todavía no hay datos suficientes para graficar esta vista.', 'There is not enough data to chart this view yet.')} />
                 ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={contenido.seriePrincipal}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="etiqueta" stroke="#cbd5e1" />
-                      <YAxis stroke="#cbd5e1" domain={contenido.graficoPrincipal.limitePorcentaje ? [0, 100] : ['auto', 'auto']} allowDecimals={false} />
-                      <Tooltip
-                        formatter={(valor, _, item) => {
-                          const detalle = item?.payload?.detalle ? ' (${item.payload.detalle})' : ''
-                          return '${valor}${contenido.graficoPrincipal.sufijoValor}${detalle}'
-                        }}
-                        labelFormatter={(label) => label}
-                      />
-                      <Bar dataKey={contenido.graficoPrincipal.valorKey} radius={[10, 10, 0, 0]}>
-                        {contenido.seriePrincipal.map((item, indice) => (
-                          <Cell key={'${item.etiqueta}-${indice}'} fill={coloresGrafico[indice % coloresGrafico.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <GraficoLinealColorido serie={contenido.seriePrincipal} grafico={contenido.graficoPrincipal} />
                 )}
               </div>
             </Panel>
@@ -826,7 +860,7 @@ const deseleccionarEstadisticasVisibles = () => {
     ]
   }, [datos.estadisticas, progresoMetasPerfil, t])
 
-  // Evita mostrar paneles grandes vacios cuando todav?a no hay datos suficientes.
+  // Evita mostrar paneles grandes vac?os cuando todav?a no hay datos suficientes.
   const mostrarBloquesAnaliticos =
     estadisticasPorMetrica.length > 0 ||
     historialReciente.length > 0 ||
@@ -3506,7 +3540,7 @@ function obtenerBadgeLogro(logro, t) {
     }
   }
 
-  if (nivel.includes('oro')) {
+  if (nivel.includes('oro') || nivel.includes('plata')) {
     return {
       nombre: t('Oro', 'Gold'),
       icono: '🥇',
@@ -3514,7 +3548,7 @@ function obtenerBadgeLogro(logro, t) {
       borde: 'border-amber-100/70',
       brillo: 'bg-[linear-gradient(90deg,#fbbf24,#f59e0b)]',
       etiqueta: 'bg-amber-400/12 text-amber-200',
-      descripcion: t('Meta superada con un margen notable.', 'Goal exceeded with a remarkable margin.'),
+      descripcion: t('Meta cumplida o superada con un gran rendimiento.', 'Goal achieved or exceeded with strong performance.'),
     }
   }
 

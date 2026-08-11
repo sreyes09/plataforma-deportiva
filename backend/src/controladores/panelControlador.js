@@ -366,8 +366,7 @@ const construirLogrosDesdeMetas = (metasAsignadas) =>
 
       let nivel = 'bronce'
       if (porcentaje >= 150) nivel = 'diamante'
-      else if (porcentaje >= 120) nivel = 'oro'
-      else if (porcentaje >= 100) nivel = 'plata'
+      else if (porcentaje >= 100) nivel = 'oro'
 
       return {
         id: `logro-${meta.id}` ,
