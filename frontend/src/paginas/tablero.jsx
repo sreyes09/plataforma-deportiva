@@ -1162,7 +1162,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
                     : 'border border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
                 : (esOscuro
                     ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
-                    : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+                    : 'cursor-not-allowed border border-slate-300 bg-slate-200 text-slate-600')}`}
             >
               {t('Borrar seleccionadas', 'Delete selected')}
             </button>
@@ -1365,7 +1365,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
                       )
                     )
                   }
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+                  className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${esOscuro ? 'border-white/10 bg-slate-950/70 text-white' : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'}`}
                 >
                   <option value="en progreso">{t('En progreso', 'In progress')}</option>
                   <option value="completada">{t('Completada', 'Completed')}</option>
@@ -2347,7 +2347,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                           }))
                           if (filtroDeportistaId === deportista.id) setFiltroDeportistaId('')
                         }}
-                        className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${esOscuro ? 'border-rose-400/30 text-rose-200 hover:bg-rose-400/10' : 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_8px_18px_rgba(244,63,94,0.16)] hover:bg-rose-100'}`}
                       >
                         {t('Desvincular', 'Unlink')}
                       </button>
@@ -2477,7 +2477,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
                 : (esOscuro
                     ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
-                    : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+                    : 'cursor-not-allowed border border-slate-300 bg-slate-200 text-slate-600')}`}
             >
               {t('Eliminar seleccionadas', 'Delete selected')}
             </button>
@@ -2508,7 +2508,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                         asignados: sesion.asignados || [],
                       })
                     }}
-                    className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${esOscuro ? 'border-cyan-400/30 text-cyan-200 hover:bg-cyan-400/10' : 'border-cyan-300 bg-cyan-50 text-cyan-800 shadow-[0_8px_18px_rgba(34,211,238,0.18)] hover:bg-cyan-100'}`}
                   >
                     {t('Editar', 'Edit')}
                   </button>
@@ -2521,7 +2521,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                       }))
                       if (edicionSesionId === sesion.id) resetSesion()
                     }}
-                    className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${esOscuro ? 'border-rose-400/30 text-rose-200 hover:bg-rose-400/10' : 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_8px_18px_rgba(244,63,94,0.16)] hover:bg-rose-100'}`}
                   >
                     {t('Eliminar', 'Delete')}
                   </button>
@@ -2591,7 +2591,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             <textarea
               value={nuevaMeta.descripcion}
               onChange={(e) => setNuevaMeta({ ...nuevaMeta, descripcion: e.target.value })}
-              className="mt-2 min-h-24 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+              className={`mt-2 min-h-24 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${esOscuro ? 'border-white/10 bg-slate-950/70 text-white' : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'}`}
             />
           </div>
           <Campo label="Objetivo numerico" type="number" value={nuevaMeta.objetivo} onChange={(value) => setNuevaMeta({ ...nuevaMeta, objetivo: value })} />
@@ -2606,13 +2606,13 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             onDeseleccionarTodos={() => deseleccionarTodosVisibles(setNuevaMeta)}
           />
           {nuevaMeta.asignados.length > 0 && (
-            <div className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-              <p className="text-sm font-medium text-slate-300">Progreso individual por deportista</p>
+            <div className={`space-y-3 rounded-2xl border p-4 ${esOscuro ? 'border-white/10 bg-slate-950/60' : 'border-slate-200 bg-white/90 shadow-[0_10px_24px_rgba(148,163,184,0.1)]'}`}>
+              <p className={`text-sm font-medium ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>Progreso individual por deportista</p>
               {nuevaMeta.asignados.map((deportistaId) => {
                 const asignacion = (nuevaMeta.asignaciones || []).find((item) => item.deportistaId === deportistaId)
                 const deportista = opcionesDeportistas.find((item) => item.id === deportistaId)
                 return (
-                  <div key={deportistaId} className="grid gap-3 rounded-xl border border-white/8 bg-white/5 p-3 md:grid-cols-3">
+                  <div key={deportistaId} className={`grid gap-3 rounded-xl border p-3 md:grid-cols-3 ${esOscuro ? 'border-white/8 bg-white/5' : 'border-slate-200 bg-slate-50/90'}`}>
                     <div className="md:col-span-3">
                       <p className="font-medium">{deportista?.nombre || asignacion?.nombre}</p>
                     </div>
@@ -2668,7 +2668,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                             ),
                           }))
                         }
-                        className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+                        className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${esOscuro ? 'border-white/10 bg-slate-950/70 text-white' : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'}`}
                       >
                         <option value="en progreso">{t('En progreso', 'In progress')}</option>
                         <option value="completada">{t('Completada', 'Completed')}</option>
@@ -2688,7 +2688,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
               <button
                 type="button"
                 onClick={resetMeta}
-                className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
+                className={`rounded-2xl border px-4 py-3 font-semibold transition ${esOscuro ? 'border-white/15 text-slate-200 hover:bg-white/5' : 'border-slate-300 bg-white text-slate-800 shadow-[0_10px_24px_rgba(148,163,184,0.12)] hover:bg-slate-50'}`}
               >
                 {t('Cancelar', 'Cancel')}
               </button>
@@ -2714,7 +2714,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
                 : (esOscuro
                     ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
-                    : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+                    : 'cursor-not-allowed border border-slate-300 bg-slate-200 text-slate-600')}`}
             >
               {t('Eliminar seleccionadas', 'Delete selected')}
             </button>
@@ -2773,7 +2773,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                       })),
                     })
                   }}
-                  className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
+                  className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${esOscuro ? 'border-cyan-400/30 text-cyan-200 hover:bg-cyan-400/10' : 'border-cyan-300 bg-cyan-50 text-cyan-800 shadow-[0_8px_18px_rgba(34,211,238,0.18)] hover:bg-cyan-100'}`}
                 >
                   {t('Editar', 'Edit')}
                 </button>
@@ -2786,7 +2786,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     }))
                     if (edicionMetaId === meta.id) resetMeta()
                   }}
-                  className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
+                  className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${esOscuro ? 'border-rose-400/30 text-rose-200 hover:bg-rose-400/10' : 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_8px_18px_rgba(244,63,94,0.16)] hover:bg-rose-100'}`}
                 >
                   {t('Eliminar', 'Delete')}
                 </button>
@@ -2860,7 +2860,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
               <button
                 type="button"
                 onClick={resetCompetencia}
-                className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
+                className={`rounded-2xl border px-4 py-3 font-semibold transition ${esOscuro ? 'border-white/15 text-slate-200 hover:bg-white/5' : 'border-slate-300 bg-white text-slate-800 shadow-[0_10px_24px_rgba(148,163,184,0.12)] hover:bg-slate-50'}`}
               >
                 {t('Cancelar', 'Cancel')}
               </button>
@@ -2886,7 +2886,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
                 : (esOscuro
                     ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
-                    : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+                    : 'cursor-not-allowed border border-slate-300 bg-slate-200 text-slate-600')}`}
             >
               {t('Eliminar seleccionadas', 'Delete selected')}
             </button>
@@ -2919,7 +2919,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                         asignados: competencia.asignados || [],
                       })
                     }}
-                    className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${esOscuro ? 'border-cyan-400/30 text-cyan-200 hover:bg-cyan-400/10' : 'border-cyan-300 bg-cyan-50 text-cyan-800 shadow-[0_8px_18px_rgba(34,211,238,0.18)] hover:bg-cyan-100'}`}
                   >
                     {t('Editar', 'Edit')}
                   </button>
@@ -2932,7 +2932,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                       }))
                       if (edicionCompetenciaId === competencia.id) resetCompetencia()
                     }}
-                    className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
+                    className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${esOscuro ? 'border-rose-400/30 text-rose-200 hover:bg-rose-400/10' : 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_8px_18px_rgba(244,63,94,0.16)] hover:bg-rose-100'}`}
                   >
                     {t('Eliminar', 'Delete')}
                   </button>
@@ -2996,7 +2996,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                 deportista: deportista?.nombre || '',
               })
             }}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+            className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${esOscuro ? 'border-white/10 bg-slate-950/70 text-white' : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'}`}
           >
             <option value="">{t('Seleccione un deportista', 'Select an athlete')}</option>
             {opcionesDeportistas.map((deportista) => (
@@ -3009,7 +3009,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           <textarea
             value={nuevaObservacion.nota}
             onChange={(e) => setNuevaObservacion({ ...nuevaObservacion, nota: e.target.value })}
-            className="mt-2 min-h-28 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+            className={`mt-2 min-h-28 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${esOscuro ? 'border-white/10 bg-slate-950/70 text-white' : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'}`}
           />
         </div>
         <Campo label={t('Prioridad', 'Priority')} value={nuevaObservacion.prioridad} onChange={(value) => setNuevaObservacion({ ...nuevaObservacion, prioridad: value })} />
@@ -3021,7 +3021,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             <button
               type="button"
               onClick={resetObservacion}
-              className="rounded-2xl border border-white/15 px-4 py-3 font-semibold text-slate-200 transition hover:bg-white/5"
+              className={`rounded-2xl border px-4 py-3 font-semibold transition ${esOscuro ? 'border-white/15 text-slate-200 hover:bg-white/5' : 'border-slate-300 bg-white text-slate-800 shadow-[0_10px_24px_rgba(148,163,184,0.12)] hover:bg-slate-50'}`}
             >
               {t('Cancelar', 'Cancel')}
             </button>
@@ -3047,7 +3047,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                   : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110')
               : (esOscuro
                   ? 'cursor-not-allowed border border-white/10 bg-white/5 text-slate-500'
-                  : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400')}`}
+                  : 'cursor-not-allowed border border-slate-300 bg-slate-200 text-slate-600')}`}
           >
             {t('Eliminar seleccionadas', 'Delete selected')}
           </button>
@@ -3059,9 +3059,9 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
           <div className="w-full">
             <div className="flex items-center justify-between gap-4">
               <h4 className="font-semibold">{observacion.deportista}</h4>
-              <span className="rounded-full bg-rose-400/15 px-3 py-1 text-xs uppercase tracking-[0.2em] text-rose-200">{observacion.prioridad}</span>
+              <span className={`rounded-full px-3 py-1 text-xs uppercase tracking-[0.2em] ${esOscuro ? 'bg-rose-400/15 text-rose-200' : 'bg-rose-100 text-rose-700 border border-rose-200'}`}>{observacion.prioridad}</span>
             </div>
-            <p className="mt-3 text-sm text-slate-300">{observacion.nota}</p>
+            <p className={`mt-3 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{observacion.nota}</p>
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
@@ -3074,7 +3074,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     prioridad: observacion.prioridad || 'media',
                   })
                 }}
-                className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
+                className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${esOscuro ? 'border-cyan-400/30 text-cyan-200 hover:bg-cyan-400/10' : 'border-cyan-300 bg-cyan-50 text-cyan-800 shadow-[0_8px_18px_rgba(34,211,238,0.18)] hover:bg-cyan-100'}`}
               >
                 {t('Editar', 'Edit')}
               </button>
@@ -3087,7 +3087,7 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                   }))
                   if (edicionObservacionId === observacion.id) resetObservacion()
                 }}
-                className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
+                className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${esOscuro ? 'border-rose-400/30 text-rose-200 hover:bg-rose-400/10' : 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_8px_18px_rgba(244,63,94,0.16)] hover:bg-rose-100'}`}
               >
                 {t('Eliminar', 'Delete')}
               </button>
@@ -3750,6 +3750,8 @@ function ListaEntrenadorAsignaciones({
 }
 
 export default Tablero
+
+
 
 
 
