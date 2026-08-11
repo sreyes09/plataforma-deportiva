@@ -1399,6 +1399,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
 function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstadoUsuario }) {
   const [perfil, setPerfil] = useState(datos.perfil)
   const [editandoPerfil, setEditandoPerfil] = useState(false)
+  const [nombreFotoPerfil, setNombreFotoPerfil] = useState('')
   const [busquedaUsuarios, setBusquedaUsuarios] = useState('')
   const [filtroRolAdmin, setFiltroRolAdmin] = useState('')
   const [filtroEstadoAdmin, setFiltroEstadoAdmin] = useState('')
@@ -1698,6 +1699,7 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
 function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeportista }) {
   const [perfil, setPerfil] = useState(datos.perfil)
   const [editandoPerfil, setEditandoPerfil] = useState(false)
+  const [nombreFotoPerfil, setNombreFotoPerfil] = useState('')
   const [correoDeportista, setCorreoDeportista] = useState('')
   const [edicionSesionId, setEdicionSesionId] = useState('')
   const [edicionMetaId, setEdicionMetaId] = useState('')
