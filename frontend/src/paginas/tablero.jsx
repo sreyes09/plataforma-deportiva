@@ -391,22 +391,24 @@ function Tablero() {
 
     if (rolUsuario === 'entrenador') {
       const distribucion = construirPorcentajeMetasEntrenador(datos)
+      const serieEstadisticasGrupo = construirSerieEstadisticasEntrenador(datos)
       return {
         resumen: obtenerResumenEntrenador(datos),
-        seriePrincipal: construirResumenCoach(datos),
+        seriePrincipal: serieEstadisticasGrupo.datos,
         serieSecundaria: distribucion.series,
         graficoPrincipal: {
           etiqueta: t('Vista del grupo', 'Group view'),
-          titulo: t('Avance de metas por deportista vinculado', 'Goal progress by linked athlete'),
+          titulo: t('Evoluci?n acumulada de estad?sticas del grupo', 'Cumulative statistics evolution of the group'),
           valorKey: 'valor',
           detalleKey: 'detalle',
-          nombreValor: t('Progreso', 'Progress'),
-          sufijoValor: '%',
-          limitePorcentaje: true,
+          nombreValor: t('Valor', 'Value'),
+          sufijoValor: '',
+          limitePorcentaje: false,
+          lineas: serieEstadisticasGrupo.lineas,
         },
         graficoSecundario: {
           etiqueta: t('Estado general', 'Overall status'),
-          titulo: t(`${distribucion.porcentaje}% de deportistas al día con sus metas`, `${distribucion.porcentaje}% of athletes on track with their goals`),
+          titulo: t(`${distribucion.porcentaje}% de deportistas al d?a con sus metas`, `${distribucion.porcentaje}% of athletes on track with their goals`),
           porcentajeCentro: distribucion.porcentaje,
           total: distribucion.total,
         },
@@ -415,18 +417,20 @@ function Tablero() {
     }
 
     const distribucion = construirPorcentajeMetasDeportista(datos)
+    const serieEstadisticas = construirSerieEstadisticasDeportista(datos)
     return {
       resumen: obtenerResumenDeportista(datos),
-      seriePrincipal: construirSerieDeportista(datos),
+      seriePrincipal: serieEstadisticas.datos,
       serieSecundaria: distribucion.series,
       graficoPrincipal: {
         etiqueta: t('Rendimiento individual', 'Individual performance'),
-        titulo: datos.metas.length > 0 ? t('Porcentaje de avance por meta', 'Goal progress percentage') : t('Evolución de estadísticas', 'Statistics evolution'),
+        titulo: t('Evoluci?n acumulada de estad?sticas', 'Cumulative statistics evolution'),
         valorKey: 'valor',
         detalleKey: 'detalle',
-        nombreValor: datos.metas.length > 0 ? t('Progreso', 'Progress') : t('Valor', 'Value'),
-        sufijoValor: datos.metas.length > 0 ? '%' : '',
-        limitePorcentaje: datos.metas.length > 0,
+        nombreValor: t('Valor', 'Value'),
+        sufijoValor: '',
+        limitePorcentaje: false,
+        lineas: serieEstadisticas.lineas,
       },
       graficoSecundario: {
         etiqueta: t('Cumplimiento personal', 'Personal completion'),
