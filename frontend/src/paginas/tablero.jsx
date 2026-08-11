@@ -614,7 +614,31 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
     })
   ), [busquedaEstadistica, datos.estadisticas, filtroDisciplinaEstadistica, filtroMetrica])
 
-  // Tarjetas resumen para que el perfil no sea solo un formulario sino tambien un panel analitico.
+  const toggleSeleccionEstadistica = (indiceOriginal) => {
+  setEstadisticasSeleccionadas((previas) => (
+    previas.includes(indiceOriginal)
+      ? previas.filter((indice) => indice !== indiceOriginal)
+      : [...previas, indiceOriginal]
+  ))
+}
+
+const seleccionarEstadisticasVisibles = () => {
+  const indicesVisibles = estadisticasFiltradas
+    .map((item) => datos.estadisticas.indexOf(item))
+    .filter((indice) => indice >= 0)
+
+  setEstadisticasSeleccionadas((previas) => Array.from(new Set([...(previas || []), ...indicesVisibles])))
+}
+
+const deseleccionarEstadisticasVisibles = () => {
+  const indicesVisibles = estadisticasFiltradas
+    .map((item) => datos.estadisticas.indexOf(item))
+    .filter((indice) => indice >= 0)
+
+  setEstadisticasSeleccionadas((previas) => (previas || []).filter((indice) => !indicesVisibles.includes(indice)))
+}
+
+// Tarjetas resumen para que el perfil no sea solo un formulario sino tambien un panel analitico.
   const metricasPerfil = useMemo(() => {
     const totalRegistros = datos.estadisticas.length
     const totalValor = datos.estadisticas.reduce((suma, item) => suma + (Number(item.valor) || 0), 0)
@@ -809,32 +833,6 @@ function ModuloDeportista({ datos, moduloActivo, guardarCambios, ranking }) {
                 <p className={`mt-2 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{item.detalle}</p>
               </div>
             ))}
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <ResumenAsignadoSimple
-              titulo={t('Metas asignadas', 'Assigned goals')}
-              vacio={t('Aun no tienes metas asignadas.', 'You do not have any assigned goals yet.')}
-              items={datos.metas}
-              render={(meta) => `${meta.titulo} - ${meta.progreso}/${meta.objetivo}`}
-            />
-            <ResumenAsignadoSimple
-              titulo={t('Sesiones asignadas', 'Assigned sessions')}
-              vacio={t('Aun no tienes sesiones asignadas.', 'You do not have any assigned sessions yet.')}
-              items={datos.sesiones}
-              render={(sesion) => `${sesion.tipo} - ${sesion.fecha}`}
-            />
-            <ResumenAsignadoSimple
-              titulo={t('Competencias asignadas', 'Assigned competitions')}
-              vacio={t('Aun no tienes competencias asignadas.', 'You do not have any assigned competitions yet.')}
-              items={datos.competencias}
-              render={(competencia) => `${competencia.nombre} - ${competencia.fecha}`}
-            />
-            <ResumenAsignadoSimple
-              titulo={t('Seguimiento', 'Tracking')}
-              vacio={t('Aun no hay observaciones de tu entrenador.', 'There are no coach observations yet.')}
-              items={datos.observaciones}
-              render={(observacion) => `${observacion.prioridad} - ${observacion.nota}`}
-            />
           </div>
           {mostrarBloquesAnaliticos && (
             <>
@@ -3478,4 +3476,5 @@ function ListaEntrenadorAsignaciones({
 }
 
 export default Tablero
+
 
