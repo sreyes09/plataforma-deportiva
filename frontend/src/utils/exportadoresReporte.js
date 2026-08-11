@@ -31,12 +31,25 @@ const crearNombreArchivo = (rolUsuario, extension) => {
 }
 
 // Une nombre y apellidos sin repetir espacios ni valores vacíos.
-const construirNombreCompleto = (...partes) =>
-  partes
+const construirNombreCompleto = (...partes) => {
+  const tokens = partes
     .flat()
     .map((item) => limpiarTexto(item))
     .filter(Boolean)
     .join(' ')
+    .split(' ')
+    .filter(Boolean)
+
+  const unicos = []
+  tokens.forEach((token) => {
+    const anterior = unicos[unicos.length - 1]
+    if (!anterior || anterior.toLowerCase() !== token.toLowerCase()) {
+      unicos.push(token)
+    }
+  })
+
+  return unicos.join(' ')
+}
 
 // Traduce el rol actual a un texto claro dentro del reporte.
 const obtenerRolLegible = (rolUsuario, t) => {
@@ -51,6 +64,24 @@ const normalizarFila = (fila = []) => fila.map((celda) => limpiarTexto(celda))
 // Garantiza que cada sección tenga contenido exportable.
 const asegurarFilas = (filas = [], t) =>
   filas.length > 0 ? filas.map((fila) => normalizarFila(fila)) : [[t('Sin registros disponibles', 'No records available')]]
+
+// Evita exportar logros repetidos cuando la misma meta ya generó varias entradas visuales.
+const deduplicarLogrosExportacion = (logros = []) => {
+  const vistos = new Set()
+
+  return (logros || []).filter((logro) => {
+    const llave = [
+      limpiarTexto(logro?.titulo || ''),
+      limpiarTexto(logro?.nivel || ''),
+      limpiarTexto(logro?.descripcion || ''),
+    ].join('|').toLowerCase()
+
+    if (!llave) return true
+    if (vistos.has(llave)) return false
+    vistos.add(llave)
+    return true
+  })
+}
 
 // Construye toda la información del reporte según el rol autenticado.
 const construirSeccionesReporte = ({ usuario, rolUsuario, datos, contenido, t, idioma }) => {
@@ -223,7 +254,7 @@ const construirSeccionesReporte = ({ usuario, rolUsuario, datos, contenido, t, i
         titulo: t('Logros y reconocimientos', 'Achievements and recognitions'),
         columnas: [t('Título', 'Title'), t('Nivel', 'Level'), t('Descripción', 'Description')],
         filas: asegurarFilas(
-          (datos?.logros || []).map((item) => [item.titulo || '', item.nivel || '', item.descripcion || '']),
+          deduplicarLogrosExportacion(datos?.logros || []).map((item) => [item.titulo || '', item.nivel || '', item.descripcion || '']),
           t
         ),
       }
@@ -291,8 +322,12 @@ export const exportarReportePdf = (contexto) => {
   let inicioY = dibujarMetadatosPdf(doc, metadatos)
 
   secciones.forEach((seccion, indice) => {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(14)
+    doc.text(limpiarTexto(seccion.titulo), 40, inicioY)
+
     autoTable(doc, {
-      startY: inicioY,
+      startY: inicioY + 12,
       head: [seccion.columnas],
       body: seccion.filas,
       theme: 'grid',
@@ -311,11 +346,6 @@ export const exportarReportePdf = (contexto) => {
       alternateRowStyles: {
         fillColor: [245, 250, 255],
       },
-      didDrawPage: () => {
-        doc.setFont('helvetica', 'bold')
-        doc.setFontSize(14)
-        doc.text(limpiarTexto(seccion.titulo), 40, 32)
-      },
     })
 
     inicioY = (doc.lastAutoTable?.finalY || 90) + 28
@@ -327,3 +357,5 @@ export const exportarReportePdf = (contexto) => {
 
   doc.save(crearNombreArchivo(contexto.rolUsuario, 'pdf'))
 }
+
+
