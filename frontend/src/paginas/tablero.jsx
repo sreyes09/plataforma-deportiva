@@ -450,7 +450,7 @@ function Tablero() {
             </div>
             <div className="mt-4 flex items-center justify-between gap-4 text-sm text-slate-300">
               <p>{contenido.graficoSecundario.total} {t('elementos evaluados', 'items evaluated')}</p>
-              <div className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 font-semibold text-cyan-100">
+              <div className={`rounded-full border px-4 py-2 font-semibold ${esOscuro ? 'border-cyan-400/30 bg-cyan-400/10 text-cyan-100' : 'border-cyan-300 bg-white text-cyan-800 shadow-[0_10px_22px_rgba(34,211,238,0.16)]'}`}>
                 {contenido.graficoSecundario.porcentajeCentro}% {t('completado', 'completed')}
               </div>
             </div>
@@ -1152,7 +1152,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
                           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                             esOscuro
                               ? 'bg-cyan-400/12 text-cyan-200'
-                              : 'bg-cyan-100 text-cyan-900'
+                              : 'border border-cyan-300 bg-white text-cyan-800 shadow-[0_8px_18px_rgba(34,211,238,0.14)]'
                           }`}>
                             {disciplinaVisible}
                           </span>
@@ -1161,7 +1161,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
                           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                             esOscuro
                               ? 'bg-amber-400/12 text-amber-200'
-                              : 'bg-amber-100 text-amber-900'
+                              : 'border border-amber-300 bg-white text-amber-800 shadow-[0_8px_18px_rgba(245,158,11,0.14)]'
                           }`}>
                             {contextoVisible}
                           </span>
@@ -1172,7 +1172,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
                       <div className={`inline-flex min-w-[5rem] justify-center rounded-2xl px-4 py-3 text-2xl font-black ${
                         esOscuro
                           ? 'bg-cyan-400/10 text-cyan-300'
-                          : 'bg-cyan-100 text-cyan-800'
+                          : 'border border-cyan-300 bg-white text-cyan-800 shadow-[0_10px_22px_rgba(34,211,238,0.16)]'
                       }`}>
                         {item.valor}
                       </div>
@@ -1299,7 +1299,11 @@ const eliminarEstadisticasSeleccionadas = async () => {
                       )
                     )
                   }
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+                  className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+              esOscuro
+                ? 'border-white/10 bg-slate-950/70 text-white'
+                : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'
+            }`}
                 >
                   <option value="en progreso">{t('En progreso', 'In progress')}</option>
                   <option value="completada">{t('Completada', 'Completed')}</option>
@@ -1379,7 +1383,7 @@ const eliminarEstadisticasSeleccionadas = async () => {
                       <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${badge.etiqueta}`}>
                         {badge.nombre}
                       </span>
-                      <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'bg-cyan-100 text-cyan-900'}`}>
+                      <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'border border-cyan-300 bg-white text-cyan-800 shadow-[0_8px_18px_rgba(34,211,238,0.14)]'}`}>
                         {limpiarTextoVisual(logro.nivel || t('Logro', 'Achievement'))}
                       </span>
                     </div>
@@ -1608,7 +1612,7 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
                     <h4 className="text-lg font-bold">{item.nombreCompleto}</h4>
                     <p className={`mt-1 text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>{item.correo}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'bg-cyan-100 text-cyan-900'}`}>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'border border-cyan-300 bg-white text-cyan-800 shadow-[0_8px_18px_rgba(34,211,238,0.14)]'}`}>
                         {item.rol}
                       </span>
                       <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -1673,7 +1677,7 @@ function ModuloAdministrador({ datos, moduloActivo, guardarCambios, cambiarEstad
                     <p className="font-semibold">{item.nombreCompleto}</p>
                     <p className={`text-sm ${esOscuro ? 'text-slate-300' : 'text-slate-600'}`}>{item.correo}</p>
                   </div>
-                  <div className={`rounded-full px-3 py-1 text-xs font-semibold ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'bg-cyan-100 text-cyan-900'}`}>
+                  <div className={`rounded-full px-3 py-1 text-xs font-semibold ${esOscuro ? 'bg-cyan-400/12 text-cyan-200' : 'border border-cyan-300 bg-white text-cyan-800 shadow-[0_8px_18px_rgba(34,211,238,0.14)]'}`}>
                     {item.rol}
                   </div>
                 </div>
@@ -2474,7 +2478,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             <textarea
               value={nuevaMeta.descripcion}
               onChange={(e) => setNuevaMeta({ ...nuevaMeta, descripcion: e.target.value })}
-              className="mt-2 min-h-24 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+              className={`mt-2 min-h-24 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+                esOscuro
+                  ? 'border-white/10 bg-slate-950/70 text-white'
+                  : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'
+              }`}
             />
           </div>
           <Campo label="Objetivo numerico" type="number" value={nuevaMeta.objetivo} onChange={(value) => setNuevaMeta({ ...nuevaMeta, objetivo: value })} />
@@ -2489,7 +2497,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
             onDeseleccionarTodos={() => deseleccionarTodosVisibles(setNuevaMeta)}
           />
           {nuevaMeta.asignados.length > 0 && (
-            <div className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+            <div className={`space-y-3 rounded-2xl border p-4 ${
+              esOscuro
+                ? 'border-white/10 bg-slate-950/60'
+                : 'border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(241,245,249,0.92))] shadow-[0_10px_22px_rgba(148,163,184,0.12)]'
+            }`}>
               <p className={`text-sm font-medium ${esOscuro ? 'text-slate-300' : 'text-slate-700'}`}>Progreso individual por deportista</p>
               {nuevaMeta.asignados.map((deportistaId) => {
                 const asignacion = (nuevaMeta.asignaciones || []).find((item) => item.deportistaId === deportistaId)
@@ -2658,7 +2670,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                       })),
                     })
                   }}
-                  className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
+                  className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                  esOscuro
+                    ? 'border-cyan-400/30 text-cyan-200 hover:bg-cyan-400/10'
+                    : 'border-cyan-300 bg-cyan-600 text-white shadow-[0_10px_22px_rgba(8,145,178,0.22)] hover:brightness-110'
+                }`}
                 >
                   {t('Editar', 'Edit')}
                 </button>
@@ -2671,7 +2687,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     }))
                     if (edicionMetaId === meta.id) resetMeta()
                   }}
-                  className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
+                  className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                  esOscuro
+                    ? 'border-rose-400/30 text-rose-200 hover:bg-rose-400/10'
+                    : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110'
+                }`}
                 >
                   {t('Eliminar', 'Delete')}
                 </button>
@@ -2873,7 +2893,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                 deportista: deportista?.nombre || '',
               })
             }}
-            className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm outline-none transition focus:border-cyan-400"
+            className={`mt-2 w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:border-cyan-400 ${
+              esOscuro
+                ? 'border-white/10 bg-slate-950/70 text-white'
+                : 'border-slate-300 bg-white text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)]'
+            }`}
           >
             <option value="">{t('Seleccione un deportista', 'Select an athlete')}</option>
             {opcionesDeportistas.map((deportista) => (
@@ -2939,7 +2963,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                     prioridad: observacion.prioridad || 'media',
                   })
                 }}
-                className="rounded-xl border border-cyan-400/30 px-3 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
+                className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                  esOscuro
+                    ? 'border-cyan-400/30 text-cyan-200 hover:bg-cyan-400/10'
+                    : 'border-cyan-300 bg-cyan-600 text-white shadow-[0_10px_22px_rgba(8,145,178,0.22)] hover:brightness-110'
+                }`}
               >
                 {t('Editar', 'Edit')}
               </button>
@@ -2952,7 +2980,11 @@ function ModuloEntrenador({ datos, moduloActivo, guardarCambios, vincularDeporti
                   }))
                   if (edicionObservacionId === observacion.id) resetObservacion()
                 }}
-                className="rounded-xl border border-rose-400/30 px-3 py-2 text-xs font-semibold text-rose-200 transition hover:bg-rose-400/10"
+                className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                  esOscuro
+                    ? 'border-rose-400/30 text-rose-200 hover:bg-rose-400/10'
+                    : 'border-rose-300 bg-rose-600 text-white shadow-[0_10px_22px_rgba(225,29,72,0.22)] hover:brightness-110'
+                }`}
               >
                 {t('Eliminar', 'Delete')}
               </button>
